@@ -29,8 +29,8 @@ const userSchema = mongoose.Schema(
       trim: true,
       minlength: 8,
       validate(value) {
-        if (!value.match(/\d/) || !value.match(/[a-zA-Z]/)) {
-          throw new Error('Password must contain at least one letter and one number');
+        if (!value.match(/\d/) || !value.match(/[a-zA-Z]/) || !value.match(/[!@#$%^&*(),.?":{}|<>]/)) {
+          throw new Error('Password must contain at least one letter and one number and one special character');
         }
       },
       private: true, // used by the toJSON plugin
@@ -38,7 +38,7 @@ const userSchema = mongoose.Schema(
     role: {
       type: String,
       enum: roles,
-      default: 'user',
+      default: roles[2],
     },
     isEmailVerified: {
       type: Boolean,

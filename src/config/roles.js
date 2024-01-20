@@ -1,8 +1,8 @@
 const allRoles = {
-  user: [],
-  admin: ['getUsers', 'manageUsers'],
+  companyAdmin: [],
+  superAdmin: [],
+  customer:[]
 };
-
 const roles = Object.keys(allRoles);
 const roleRights = new Map(Object.entries(allRoles));
 
