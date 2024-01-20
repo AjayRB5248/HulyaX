@@ -11,7 +11,7 @@
 
 ## Description
 
-The Ticket Management System Frontend is a web application designed to manage and track tickets or issues in a streamlined manner. It provides a user-friendly interface for both administrators and users to interact with the ticketing system.
+The Ticket Management System Backend is a  application designed to manage and track tickets or issues in a streamlined manner. It provides a user-friendly interface for both administrators and users to interact with the ticketing system.
 
 ## Features
 
