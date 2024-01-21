@@ -2,7 +2,7 @@ const httpStatus = require("http-status");
 const { User,Company } = require("../models");
 const ApiError = require("../utils/ApiError");
 const { roles: ALL_ROLES } = require("../config/roles");
-
+const mongoose = require("mongoose");
 /**
  * Create a user
  * @param {Object} userBody
@@ -34,14 +34,17 @@ const handleUserCreation = async (userBody) => {
     return newUser;
   }
 
+  const userId  =  mongoose.Types.ObjectId();
   const newCompany = await Company.create({
     name,
     admin: null, // You'll need to set this to the actual admin user later
     description: companyDescription,
     location: companyLocation,
+    admin : userId
   });
 
   newUser = User.create({
+    _id : userId,
     name,
     email,
     password,

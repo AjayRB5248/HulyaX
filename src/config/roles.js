@@ -1,6 +1,6 @@
 const allRoles = {
   superAdmin: [],
-  companyAdmin: [],
+  companyAdmin: ["addNewEvent"],
   customer:[]
 };
 const roles = Object.keys(allRoles);
