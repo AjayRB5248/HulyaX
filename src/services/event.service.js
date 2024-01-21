@@ -1,5 +1,5 @@
 const httpStatus = require("http-status");
-const { User, Company } = require("../models");
+const { Event } = require("../models");
 const ApiError = require("../utils/ApiError");
 
 const addEvent = async (payload) => {
