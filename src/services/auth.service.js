@@ -3,6 +3,7 @@ const tokenService = require('./token.service');
 const userService = require('./user.service');
 const Token = require('../models/token.model');
 const ApiError = require('../utils/ApiError');
+const moment = require ('moment');
 const { tokenTypes } = require('../config/tokens');
 
 /**
@@ -59,15 +60,23 @@ const refreshAuth = async (refreshToken) => {
  */
 const resetPassword = async (resetPasswordToken, newPassword) => {
   try {
-    const resetPasswordTokenDoc = await tokenService.verifyToken(resetPasswordToken, tokenTypes.RESET_PASSWORD);
+    const resetPasswordTokenDoc = await Token.findOne({token:resetPasswordToken, type:tokenTypes.OTP_RESET_PASSWORD}).lean();
+    if (moment().isAfter(resetPasswordTokenDoc.expires)) {
+      throw new Error("Token has expired");
+    }
+    if(resetPasswordTokenDoc?.token !==resetPasswordToken){
+      throw new Error("Token Not Valid");
+    }
     const user = await userService.getUserById(resetPasswordTokenDoc.user);
     if (!user) {
       throw new Error();
     }
+    console.log(newPassword)
     await userService.updateUserById(user.id, { password: newPassword });
-    await Token.deleteMany({ user: user.id, type: tokenTypes.RESET_PASSWORD });
+    await Token.deleteMany({ user: user.id, type: tokenTypes.OTP_RESET_PASSWORD });
   } catch (error) {
-    throw new ApiError(httpStatus.UNAUTHORIZED, 'Password reset failed');
+    console.error(error);
+    throw new ApiError(httpStatus.UNAUTHORIZED, error.message);
   }
 };
 

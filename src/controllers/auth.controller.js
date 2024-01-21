@@ -2,7 +2,7 @@ const httpStatus = require('http-status');
 const catchAsync = require('../utils/catchAsync');
 const { authService, userService, tokenService, emailService } = require('../services');
 const TwilioService = require('../services/twilio.service');
-const { OTP_GENERATED, OTP_VERIFIED, OTP_GENERATED_FORGET_PASSWORD } = require('../utils/standardMessage');
+const { OTP_GENERATED, OTP_VERIFIED, OTP_GENERATED_FORGET_PASSWORD, PASSWORD_RESET } = require('../utils/standardMessage');
 const { tokenTypes } = require('../config/tokens');
 
 
@@ -39,8 +39,9 @@ const forgotPassword = catchAsync(async (req, res) => {
 });
 
 const resetPassword = catchAsync(async (req, res) => {
-  await authService.resetPassword(req.query.token, req.body.password);
-  res.status(httpStatus.NO_CONTENT).send();
+  const {otp,password} = req?.body || {} ;
+  await authService.resetPassword(otp,password);
+  res.status(httpStatus.CREATED).send({message:PASSWORD_RESET});
 });
 
 const sendVerificationEmail = catchAsync(async (req, res) => {
