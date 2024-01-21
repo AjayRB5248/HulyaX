@@ -90,10 +90,29 @@ const verifyEmail = async (verifyEmailToken) => {
   }
 };
 
+
+/**
+ * Verify Number
+ * @param {object} payloadData
+ * @returns {Promise}
+ */
+const verifyNumber = async (payloadData) => {
+  try {
+    const {otp,_id:userId} = payloadData || {};
+    await tokenService.verifyOtp(otp, userId);
+    await Token.deleteMany({ user: userId, type: tokenTypes.OTP_MOBILE });
+    await userService.updateUserById(userId, { isNumberVerified: true });
+  } catch (error) {
+    console.error(error);
+    throw new ApiError(httpStatus.UNAUTHORIZED, error);
+  }
+};
+
 module.exports = {
   loginUserWithEmailAndPassword,
   logout,
   refreshAuth,
   resetPassword,
   verifyEmail,
+  verifyNumber
 };

@@ -1,11 +1,23 @@
-const Joi = require('joi');
-const { password } = require('./custom.validation');
+const Joi = require("joi");
+const { password, mobileNumberValidator } = require("./custom.validation");
+const { roles } = require("../config/roles");
 
 const register = {
   body: Joi.object().keys({
     email: Joi.string().required().email(),
     password: Joi.string().required().custom(password),
     name: Joi.string().required(),
+    profilePicture: Joi.string(),
+    role: Joi.string().valid(...roles.slice(1, 3)),
+    mobileNumber: Joi.string().required().custom(mobileNumberValidator),
+    companyDescription: Joi.when("role", {
+      is: "companyAdmin",
+      then: Joi.string(),
+    }),
+    companyLocation: Joi.when("role", {
+      is: "companyAdmin",
+      then: Joi.string(),
+    }),
   }),
 };
 
@@ -31,6 +43,7 @@ const refreshTokens = {
 const forgotPassword = {
   body: Joi.object().keys({
     email: Joi.string().email().required(),
+    mobileNumber : Joi.string().required().custom(mobileNumberValidator)
   }),
 };
 
@@ -49,6 +62,13 @@ const verifyEmail = {
   }),
 };
 
+const verifyOTP = {
+  body: Joi.object().keys({
+    otp: Joi.string().required()
+  }),
+};
+
+
 module.exports = {
   register,
   login,
@@ -57,4 +77,5 @@ module.exports = {
   forgotPassword,
   resetPassword,
   verifyEmail,
+  verifyOTP
 };

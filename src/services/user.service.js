@@ -1,6 +1,7 @@
-const httpStatus = require('http-status');
-const { User } = require('../models');
-const ApiError = require('../utils/ApiError');
+const httpStatus = require("http-status");
+const { User,Company } = require("../models");
+const ApiError = require("../utils/ApiError");
+const { roles: ALL_ROLES } = require("../config/roles");
 
 /**
  * Create a user
@@ -8,10 +9,50 @@ const ApiError = require('../utils/ApiError');
  * @returns {Promise<User>}
  */
 const createUser = async (userBody) => {
-  if (await User.isEmailTaken(userBody.email)) {
-    throw new ApiError(httpStatus.BAD_REQUEST, 'Email already taken');
+  if (await User.isEmailTaken(userBody.email) || await User.isMobileNumberTaken(userBody.mobileNumber) ) {
+    throw new ApiError(httpStatus.BAD_REQUEST, `Email or Mobile Number already taken`);
   }
-  return User.create(userBody);
+
+  return await handleUserCreation(userBody);
+};
+
+const handleUserCreation = async (userBody) => {
+  let newUser; //
+  const {
+    role,
+    companyDescription,
+    email,
+    name,
+    password,
+    profilePicture,
+    companyLocation,
+    mobileNumber
+  } = userBody || {};
+  //return user
+  if (role !== ALL_ROLES[1]) {
+    newUser = User.create({ name, email, password, role,mobileNumber });
+    return newUser;
+  }
+
+  const newCompany = await Company.create({
+    name,
+    admin: null, // You'll need to set this to the actual admin user later
+    description: companyDescription,
+    location: companyLocation,
+  });
+
+  newUser = User.create({
+    name,
+    email,
+    password,
+    role,
+    company: newCompany._id,
+    mobileNumber
+  });
+
+  newCompany.admin = newUser._id;
+
+  return newUser;
 };
 
 /**
@@ -47,6 +88,17 @@ const getUserByEmail = async (email) => {
 };
 
 /**
+ * Get user by criteria
+ * @param {object} criteria
+ * @returns {Promise<User>}
+ */
+const getUserByCriteria = async (criteria) => {
+  return User.findOne(criteria);
+};
+
+
+
+/**
  * Update user by id
  * @param {ObjectId} userId
  * @param {Object} updateBody
@@ -55,10 +107,10 @@ const getUserByEmail = async (email) => {
 const updateUserById = async (userId, updateBody) => {
   const user = await getUserById(userId);
   if (!user) {
-    throw new ApiError(httpStatus.NOT_FOUND, 'User not found');
+    throw new ApiError(httpStatus.NOT_FOUND, "User not found");
   }
   if (updateBody.email && (await User.isEmailTaken(updateBody.email, userId))) {
-    throw new ApiError(httpStatus.BAD_REQUEST, 'Email already taken');
+    throw new ApiError(httpStatus.BAD_REQUEST, "Email already taken");
   }
   Object.assign(user, updateBody);
   await user.save();
@@ -73,7 +125,7 @@ const updateUserById = async (userId, updateBody) => {
 const deleteUserById = async (userId) => {
   const user = await getUserById(userId);
   if (!user) {
-    throw new ApiError(httpStatus.NOT_FOUND, 'User not found');
+    throw new ApiError(httpStatus.NOT_FOUND, "User not found");
   }
   await user.remove();
   return user;
@@ -86,4 +138,6 @@ module.exports = {
   getUserByEmail,
   updateUserById,
   deleteUserById,
+  getUserByCriteria
+
 };

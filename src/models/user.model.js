@@ -1,8 +1,8 @@
-const mongoose = require('mongoose');
-const validator = require('validator');
-const bcrypt = require('bcryptjs');
-const { toJSON, paginate } = require('./plugins');
-const { roles } = require('../config/roles');
+const mongoose = require("mongoose");
+const validator = require("validator");
+const bcrypt = require("bcryptjs");
+const { toJSON, paginate } = require("./plugins");
+const { roles } = require("../config/roles");
 
 const userSchema = mongoose.Schema(
   {
@@ -17,9 +17,10 @@ const userSchema = mongoose.Schema(
       unique: true,
       trim: true,
       lowercase: true,
+      index: true,
       validate(value) {
         if (!validator.isEmail(value)) {
-          throw new Error('Invalid email');
+          throw new Error("Invalid email");
         }
       },
     },
@@ -29,8 +30,14 @@ const userSchema = mongoose.Schema(
       trim: true,
       minlength: 8,
       validate(value) {
-        if (!value.match(/\d/) || !value.match(/[a-zA-Z]/) || !value.match(/[!@#$%^&*(),.?":{}|<>]/)) {
-          throw new Error('Password must contain at least one letter and one number and one special character');
+        if (
+          !value.match(/\d/) ||
+          !value.match(/[a-zA-Z]/) ||
+          !value.match(/[!@#$%^&*(),.?":{}|<>]/)
+        ) {
+          throw new Error(
+            "Password must contain at least one letter and one number and one special character"
+          );
         }
       },
       private: true, // used by the toJSON plugin
@@ -44,6 +51,24 @@ const userSchema = mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    profilePicture: { type: String },
+    mobileNumber: {
+      type: String,
+      required: true,
+      unique: true,
+      trim: true,
+      index: true,
+      validate(value) {
+        if (!value.match(/^\+\d{1,}\s?\d+$/)) {
+          throw new Error("Invalid Australian Mobile Number");
+        }
+      },
+    },
+    company: { type: mongoose.Schema.Types.ObjectId, ref: "Company" }, // Reference to the associated company, but only for 'companyAdmin' role
+    isNumberVerified :{
+      type : Boolean, 
+      default: false,
+    }
   },
   {
     timestamps: true,
@@ -65,6 +90,17 @@ userSchema.statics.isEmailTaken = async function (email, excludeUserId) {
   return !!user;
 };
 
+userSchema.statics.isMobileNumberTaken = async function (
+  mobileNumber,
+  excludeUserId
+) {
+  const user = await this.findOne({
+    mobileNumber,
+    _id: { $ne: excludeUserId },
+  });
+  return !!user;
+};
+
 /**
  * Check if password matches the user's password
  * @param {string} password
@@ -75,9 +111,9 @@ userSchema.methods.isPasswordMatch = async function (password) {
   return bcrypt.compare(password, user.password);
 };
 
-userSchema.pre('save', async function (next) {
+userSchema.pre("save", async function (next) {
   const user = this;
-  if (user.isModified('password')) {
+  if (user.isModified("password")) {
     user.password = await bcrypt.hash(user.password, 8);
   }
   next();
@@ -86,6 +122,6 @@ userSchema.pre('save', async function (next) {
 /**
  * @typedef User
  */
-const User = mongoose.model('User', userSchema);
+const User = mongoose.model("User", userSchema);
 
 module.exports = User;

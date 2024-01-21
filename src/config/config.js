@@ -61,4 +61,10 @@ module.exports = {
     },
     from: envVars.EMAIL_FROM,
   },
+  twilio:{
+    accountSid: envVars.TWILIO_SID,
+    authToken: envVars.TWILIO_AUTHTOKEN,
+    smsServiceID: envVars.TWILIO_SMS_SERVICE_ID
+  },
+  APP_URL : envVars.APP_URL
 };

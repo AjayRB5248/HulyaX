@@ -1,11 +1,18 @@
 const httpStatus = require('http-status');
 const catchAsync = require('../utils/catchAsync');
 const { authService, userService, tokenService, emailService } = require('../services');
+const TwilioService = require('../services/twilio.service');
+const { OTP_GENERATED, OTP_VERIFIED, OTP_GENERATED_FORGET_PASSWORD } = require('../utils/standardMessage');
+const { tokenTypes } = require('../config/tokens');
+
+
+const twilioProcess = new TwilioService();
 
 const register = catchAsync(async (req, res) => {
   const user = await userService.createUser(req.body);
-  const tokens = await tokenService.generateAuthTokens(user);
-  res.status(httpStatus.CREATED).send({ user, tokens });
+  const [userToken,otpToken] = await Promise.all([await tokenService.generateAuthTokens(user),await tokenService.generateVerifyOTPToken(user)]);
+  await twilioProcess.sendOTP(user.name,user.mobileNumber,otpToken)
+  res.status(httpStatus.CREATED).send({ user, userToken });
 });
 
 const login = catchAsync(async (req, res) => {
@@ -26,9 +33,9 @@ const refreshTokens = catchAsync(async (req, res) => {
 });
 
 const forgotPassword = catchAsync(async (req, res) => {
-  const resetPasswordToken = await tokenService.generateResetPasswordToken(req.body.email);
-  await emailService.sendResetPasswordEmail(req.body.email, resetPasswordToken);
-  res.status(httpStatus.NO_CONTENT).send();
+  const {email,mobileNumber} = req?.body || {} ;
+  await tokenService.generateResetPasswordTokenAndSend(email, mobileNumber);
+  res.status(httpStatus.CREATED).send({message:OTP_GENERATED_FORGET_PASSWORD});
 });
 
 const resetPassword = catchAsync(async (req, res) => {
@@ -47,6 +54,21 @@ const verifyEmail = catchAsync(async (req, res) => {
   res.status(httpStatus.NO_CONTENT).send();
 });
 
+const verifyOTP = catchAsync(async (req, res) => {
+  const {otp} = req?.body || {};
+  await authService.verifyNumber({...req.user,otp});
+  res.status(httpStatus.CREATED).send({message:OTP_VERIFIED});
+});
+
+
+const generateNewOtp = catchAsync(async (req, res) => {
+  const {user} = req;
+  await tokenService.generateVerifyOTPTokenAndSendToMobile(user,tokenTypes.OTP_MOBILE);
+  res.status(httpStatus.CREATED).send({message:OTP_GENERATED});
+});
+
+
+
 module.exports = {
   register,
   login,
@@ -56,4 +78,6 @@ module.exports = {
   resetPassword,
   sendVerificationEmail,
   verifyEmail,
+  verifyOTP,
+  generateNewOtp
 };
