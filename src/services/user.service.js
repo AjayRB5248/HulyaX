@@ -1,5 +1,5 @@
 const httpStatus = require("http-status");
-const { User,Company } = require("../models");
+const { User, Company } = require("../models");
 const ApiError = require("../utils/ApiError");
 const { roles: ALL_ROLES } = require("../config/roles");
 
@@ -9,8 +9,14 @@ const { roles: ALL_ROLES } = require("../config/roles");
  * @returns {Promise<User>}
  */
 const createUser = async (userBody) => {
-  if (await User.isEmailTaken(userBody.email) || await User.isMobileNumberTaken(userBody.mobileNumber) ) {
-    throw new ApiError(httpStatus.BAD_REQUEST, `Email or Mobile Number already taken`);
+  if (
+    (await User.isEmailTaken(userBody.email)) ||
+    (await User.isMobileNumberTaken(userBody.mobileNumber))
+  ) {
+    throw new ApiError(
+      httpStatus.BAD_REQUEST,
+      `Email or Mobile Number already taken`
+    );
   }
 
   return await handleUserCreation(userBody);
@@ -26,11 +32,11 @@ const handleUserCreation = async (userBody) => {
     password,
     profilePicture,
     companyLocation,
-    mobileNumber
+    mobileNumber,
   } = userBody || {};
   //return user
   if (role !== ALL_ROLES[1]) {
-    newUser = User.create({ name, email, password, role,mobileNumber });
+    newUser = User.create({ name, email, password, role, mobileNumber });
     return newUser;
   }
 
@@ -47,7 +53,7 @@ const handleUserCreation = async (userBody) => {
     password,
     role,
     company: newCompany._id,
-    mobileNumber
+    mobileNumber,
   });
 
   newCompany.admin = newUser._id;
@@ -96,8 +102,6 @@ const getUserByCriteria = async (criteria) => {
   return User.findOne(criteria);
 };
 
-
-
 /**
  * Update user by id
  * @param {ObjectId} userId
@@ -112,6 +116,7 @@ const updateUserById = async (userId, updateBody) => {
   if (updateBody.email && (await User.isEmailTaken(updateBody.email, userId))) {
     throw new ApiError(httpStatus.BAD_REQUEST, "Email already taken");
   }
+
   Object.assign(user, updateBody);
   await user.save();
   return user;
@@ -138,6 +143,5 @@ module.exports = {
   getUserByEmail,
   updateUserById,
   deleteUserById,
-  getUserByCriteria
-
+  getUserByCriteria,
 };
