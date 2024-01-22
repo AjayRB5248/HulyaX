@@ -7,7 +7,7 @@ const router = express.Router();
 
 router.route("/add-new-event").post(
   auth("addNewEvent"),
-  // validate(eventValidation.createEvent),
+  validate(eventValidation.createEvent),
   eventController.addEvent
 );
 

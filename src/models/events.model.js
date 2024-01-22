@@ -25,9 +25,14 @@ const venueSchema = {
 const eventSchema = mongoose.Schema(
   {
     // Status of the event (e.g., "Active", "Cancelled")
-    eventStatus: {
+    status: {
       type: String,
-      required: true,
+      // required: true,
+    },
+    eventName: {
+      type: String,
+      index: true,
+      unique: true,
     },
     // Reference to the owning company's ObjectId
     eventOwner: {
