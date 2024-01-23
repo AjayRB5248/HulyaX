@@ -13,19 +13,28 @@ const createEvent = {
         })
       )
       .required(),
-    // ticketTypes: Joi.array()
-    //   .min(1)
-    //   .items(
-    //     Joi.object().keys({
-    //       venue: Joi.string().optional(),
-    //       type: Joi.string().required(),
-    //       price: Joi.number().required(),
-    //     })
-    //   )
-    //   .required(),
   }),
 };
 
+const setupEventTickets = {
+  body: Joi.object()
+    .keys({
+      eventId: Joi.string().required(),
+      venueId: Joi.string().required(),
+      ticketTypes: Joi.array()
+        .min(1)
+        .items(
+          Joi.object().keys({
+            type: Joi.string().required(),
+            price: Joi.number().required(),
+            seats: Joi.number().required(),
+          })
+        ),
+      // TODO : add other payload validators
+    })
+    .unknown(),
+};
 module.exports = {
   createEvent,
+  setupEventTickets,
 };

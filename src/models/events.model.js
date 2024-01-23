@@ -37,7 +37,7 @@ const eventSchema = mongoose.Schema(
     // Reference to the owning company's ObjectId
     eventOwner: {
       type: Schema.Types.ObjectId,
-      ref: "Company",
+      ref: "User",
       index: true,
     },
     // Venue where the event takes place

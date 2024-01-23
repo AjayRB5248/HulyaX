@@ -5,10 +5,20 @@ const eventController = require("../../controllers/event.controller");
 const eventValidation = require("../../validations/event.validation");
 const router = express.Router();
 
-router.route("/add-new-event").post(
-  auth("addNewEvent"),
-  validate(eventValidation.createEvent),
-  eventController.addEvent
-);
+router
+  .route("/add-new-event")
+  .post(
+    auth("addNewEvent"),
+    validate(eventValidation.createEvent),
+    eventController.addEvent
+  );
+
+router
+  .route("/setup-event-tickets")
+  .post(
+    auth("setupTickets"),
+    validate(eventValidation.setupEventTickets),
+    eventController.setupEventTickets
+  );
 
 module.exports = router;
