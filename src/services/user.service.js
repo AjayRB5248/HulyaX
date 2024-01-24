@@ -139,6 +139,12 @@ const deleteUserById = async (userId) => {
   return user;
 };
 
+const updateDisplayPicture = async (file,user) => {
+  await User.findByIdAndUpdate(user._id,{profilePicture:file.location});
+  return;
+};
+
+
 module.exports = {
   createUser,
   queryUsers,
@@ -147,4 +153,5 @@ module.exports = {
   updateUserById,
   deleteUserById,
   getUserByCriteria,
+  updateDisplayPicture
 };

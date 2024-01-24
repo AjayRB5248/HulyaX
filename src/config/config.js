@@ -66,5 +66,11 @@ module.exports = {
     authToken: envVars.TWILIO_AUTHTOKEN,
     smsServiceID: envVars.TWILIO_SMS_SERVICE_ID
   },
-  APP_URL : envVars.APP_URL
+  APP_URL : envVars.APP_URL,
+  AWS_CONFIG:{
+    accessKeyId:envVars.AWS_ACCESS_KEY_ID,
+    secretAccessKey:envVars.AWS_SECRET_ACCESS_KEY,
+    region:envVars.AWS_REGION,
+    AWS_S3_BUCKET_NAME:envVars.AWS_S3_BUCKET_NAME
+  }
 };
