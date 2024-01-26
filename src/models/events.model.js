@@ -6,15 +6,11 @@ const venueSchema = {
   _id: {
     type: mongoose.Types.ObjectId,
   },
-  status: {
-    type: String,
-    // default: "coming soon",
-  },
   venueName: {
     type: String,
     required: true,
   },
-  dateOfEvent: {
+  eventDate: {
     type: Date,
     required: true,
   },
@@ -27,12 +23,13 @@ const eventSchema = mongoose.Schema(
     // Status of the event (e.g., "Active", "Cancelled")
     status: {
       type: String,
+      default : "ACTIVE",
+      enum:["ACTIVE","CANCELLED","COMPLETED"],
+      index: true,
       // required: true,
     },
     eventName: {
       type: String,
-      index: true,
-      unique: true,
     },
     // Reference to the owning company's ObjectId
     eventOwner: {
@@ -42,14 +39,14 @@ const eventSchema = mongoose.Schema(
     },
     // Venue where the event takes place
     venueDetails: [venueSchema],
-    slag: {
+    slug: {
       type: String,
     },
     // Array of ticket types with reference to "ticket-configs" collection
     ticketTypes: [
       {
         type: Schema.Types.ObjectId,
-        ref: "ticket-configs",
+        ref: "TicketConfig",
       },
     ],
     eventImages: [
