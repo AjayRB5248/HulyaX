@@ -14,7 +14,7 @@ class TwilioService {
        await this.client.messages.create({
         to: phoneNumber,
         messagingServiceSid: this.serviceSid,
-        body: `Dear ${name} Your OTP for registration is: ${otp}`,
+        body: `Dear ${name} Your OTP is: ${otp}`,
       });
 
       return true;

@@ -2,7 +2,6 @@ const jwt = require("jsonwebtoken");
 const moment = require("moment");
 const httpStatus = require("http-status");
 const config = require("../config/config");
-const userService = require("./user.service");
 const { Token } = require("../models");
 const ApiError = require("../utils/ApiError");
 const { tokenTypes } = require("../config/tokens");
@@ -121,16 +120,9 @@ const generateAuthTokens = async (user) => {
  * @returns {Promise<string>}
  */
 const generateResetPasswordTokenAndSend = async (email, mobileNumber) => {
-  const user = await userService.getUserByCriteria({ email, mobileNumber });
-  if (!user) {
-    throw new ApiError(
-      httpStatus.NOT_FOUND,
-      "No users found with this email and mobile Number"
-    );
-  }
-
+  
   await generateVerifyOTPTokenAndSendToMobile(
-    user,
+    email,
     tokenTypes.OTP_RESET_PASSWORD
   );
   return true;
@@ -161,12 +153,13 @@ const generateVerifyEmailToken = async (user) => {
  * @returns {Promise<string>}
  */
 const generateVerifyOTPToken = async (user) => {
-  const otp = Math.floor(100000 + Math.random() * 900000);
+  const otp = (Math.floor(Math.random() * 90000000) + 10000000).toString();
   const expires = moment().add(
     config.jwt.verifyEmailExpirationMinutes,
     "minutes"
   );
-  await saveToken(otp, user.id, expires, tokenTypes.OTP_MOBILE);
+  const jwtToken = await generateCustomToken({otp,user:user.id})
+  await saveToken(jwtToken, user.id, expires, tokenTypes.OTP_MOBILE);
   return otp;
 };
 
@@ -177,19 +170,23 @@ const generateVerifyOTPToken = async (user) => {
  * @returns {Promise<string>}
  */
 
-const verifyOtp = async (otp, user) => {
+const verifyOtp = async (user, otp,type) => {
   const tokenObject = await Token.findOne({
-    token: otp,
     user,
-    type: tokenTypes.OTP_MOBILE,
-  }).lean();
+    type
+  }).sort({createdAt:-1}).lean();
+  console.log(user,otp,type)
   if (!tokenObject) throw new Error("Token Not Valid");
   // Check if the token is expired
+
+  const decodedToken = jwt.decode(tokenObject.token, config.jwt.secret);
+
+  console.log(decodedToken);
+  if (decodedToken?.otp !== otp) throw new Error("Token Not Valid");
+
   if (moment().isAfter(tokenObject.expires)) {
     throw new Error("Token has expired");
   }
-
-  if (tokenObject?.token !== otp) throw new Error("Token Not Valid");
 
   return true;
 };
@@ -199,14 +196,23 @@ const verifyOtp = async (otp, user) => {
  * @param {User} user
  * @returns {Promise<boolean>}
  */
-const generateVerifyOTPTokenAndSendToMobile = async (user, type) => {
-  const otp = Math.floor(100000 + Math.random() * 900000);
+const generateVerifyOTPTokenAndSendToMobile = async (email, tokenType) => {
+  const userService = require("./user.service");
+  const user = await userService.getUserByEmail(email);
+  if (!user) {
+    throw new ApiError(
+      httpStatus.NOT_FOUND,
+      "No users found with this email and mobile Number"
+    );
+  }
+  const otp = (Math.floor(Math.random() * 90000000) + 10000000).toString();
   const expires = moment().add(
     config.jwt.verifyEmailExpirationMinutes,
     "minutes"
   );
-  await Token.deleteMany({ user: user._id, type });
-  await saveToken(otp, user._id, expires, type);
+  await Token.deleteMany({ user: user._id, type:tokenTypes[tokenType] });
+  const signedOtp = await generateCustomToken({otp,user:user._id})
+  await saveToken(signedOtp, user._id, expires, tokenTypes[tokenType]);
   await twilioProcess.sendOTP(user.name, user.mobileNumber, otp);
   return true;
 };
@@ -220,6 +226,16 @@ const removeAllToken = async (user, type) => {
   await Token.deleteMany({ user: user._id, type });
   return true;
 };
+
+
+
+const generateCustomToken = async (payloadData , JWT_SECRET = config.jwt.secret) =>{
+  return jwt.sign(payloadData, JWT_SECRET, { expiresIn: '10m' });
+}
+
+
+
+
 
 module.exports = {
   generateToken,

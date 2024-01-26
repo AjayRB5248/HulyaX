@@ -20,6 +20,12 @@ router
   
 router
   .route("/profile-picture")
-  .post(auth("manageUsers"),getFileMiddleware("profile-picture"),userController.updateProfilePicture)
+  .post(auth("manageUsers"),getFileMiddleware("profile-picture"),userController.updateProfilePicture);
+
+
+router
+  .route("/update-mobile")
+  .post(auth("manageUsers"),validate(userValidation.updateMobileNumber),userController.updateMobilePhone)
+
 
 module.exports = router;

@@ -3,6 +3,10 @@ const { User, Company } = require("../models");
 const ApiError = require("../utils/ApiError");
 const { roles: ALL_ROLES } = require("../config/roles");
 const mongoose = require("mongoose");
+const { tokenTypes } = require("../config/tokens");
+
+const {verifyOtp} = require("./token.service");
+
 /**
  * Create a user
  * @param {Object} userBody
@@ -116,9 +120,14 @@ const updateUserById = async (userId, updateBody) => {
   if (!user) {
     throw new ApiError(httpStatus.NOT_FOUND, "User not found");
   }
+
+  delete updateBody?.mobileNumber;
+
   if (updateBody.email && (await User.isEmailTaken(updateBody.email, userId))) {
-    throw new ApiError(httpStatus.BAD_REQUEST, "Email already taken");
+    throw new ApiError(httpStatus.BAD_REQUEST, "Email or Passsword already taken");
   }
+
+   
 
   Object.assign(user, updateBody);
   await user.save();
@@ -144,6 +153,21 @@ const updateDisplayPicture = async (file,user) => {
   return;
 };
 
+const updateMobileNumbers = async (user, mobileNumber, otp) => {
+  if (user.mobileNumber === mobileNumber) {
+    throw new ApiError(
+      httpStatus.NOT_ACCEPTABLE,
+      "Mobile Number must be different!"
+    );
+  }
+
+
+
+  await verifyOtp(user._id, otp, tokenTypes.OTP_CHANGE_MOBILE);
+  await User.findByIdAndUpdate(user._id, { mobileNumber });
+  return 0;
+};
+
 
 module.exports = {
   createUser,
@@ -153,5 +177,6 @@ module.exports = {
   updateUserById,
   deleteUserById,
   getUserByCriteria,
-  updateDisplayPicture
+  updateDisplayPicture,
+  updateMobileNumbers
 };

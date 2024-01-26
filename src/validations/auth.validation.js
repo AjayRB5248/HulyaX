@@ -1,6 +1,7 @@
 const Joi = require("joi");
 const { password, mobileNumberValidator } = require("./custom.validation");
 const { roles } = require("../config/roles");
+const { tokenTypes } = require("../config/tokens");
 
 const register = {
   body: Joi.object().keys({
@@ -43,14 +44,16 @@ const refreshTokens = {
 const forgotPassword = {
   body: Joi.object().keys({
     email: Joi.string().email().required(),
-    mobileNumber : Joi.string().required().custom(mobileNumberValidator)
+    tokenType : Joi.string().valid(...Object.keys(tokenTypes))
+
   }),
 };
 
 const resetPassword = {
   body: Joi.object().keys({
     password: Joi.string().required(),
-    otp:Joi.string().required()
+    otp:Joi.string().required().length(8),
+    email : Joi.string().email().required()
   }),
 };
 
@@ -62,9 +65,19 @@ const verifyEmail = {
 
 const verifyOTP = {
   body: Joi.object().keys({
-    otp: Joi.string().required()
+    otp: Joi.string().required().length(8),
+    email: Joi.string().email().required()
   }),
 };
+
+
+const generateOtp = {
+  body: Joi.object().keys({
+    email: Joi.string().email().required(),
+    tokenType : Joi.string().valid(...Object.keys(tokenTypes))
+  }),
+
+}
 
 
 module.exports = {
@@ -75,5 +88,6 @@ module.exports = {
   forgotPassword,
   resetPassword,
   verifyEmail,
-  verifyOTP
+  verifyOTP,
+  generateOtp
 };

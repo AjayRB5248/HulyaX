@@ -42,6 +42,22 @@ const updateProfilePicture = catchAsync(async (req, res) => {
     .send({ message: "Profile picture Update successfully" });
 });
 
+
+const updateMobilePhone  = catchAsync(async (req, res) => {
+  const {user,body} = req || {};
+  const { mobileNumber, otp } = body || {} ; 
+  await userService.updateMobileNumbers(user,mobileNumber,otp);
+  res
+  .status(httpStatus.CREATED)
+  .send({ message: "Mobile Number Update successfully" });
+
+
+});
+
+
+
+
+
 module.exports = {
   createUser,
   getUsers,
@@ -49,4 +65,5 @@ module.exports = {
   updateUser,
   deleteUser,
   updateProfilePicture,
+  updateMobilePhone
 };
