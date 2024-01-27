@@ -1,27 +1,38 @@
 const mongoose = require("mongoose");
 const Schema = mongoose.Schema;
 
-const TicketConfig = mongoose.Schema(
+const ticketConfigSchema = mongoose.Schema(
   {
     eventId: {
       type: Schema.Types.ObjectId,
       ref: "Events",
+      required: true,
     },
     venueId: {
       type: mongoose.Types.ObjectId,
     },
     type: {
       type: String,
-      //   required: true,
-      //   default: "STANDARD",
+      required: true,
     },
     price: {
       type: Number,
       required: true,
     },
-    totalCount: {
+    totalSeats: {
       type: Number,
-      default: 0,
+      required: true,
+      min: 0, // Ensure that the total seats are at least 1
+    },
+    availableSeats: {
+      type: Number,
+      required: true,
+      validate: {
+        validator: function (value) {
+          return value <= this.totalSeats;
+        },
+        message: "Available seats cannot be greater than total seats",
+      },
     },
     purchasedCount: {
       type: Number,
@@ -33,6 +44,6 @@ const TicketConfig = mongoose.Schema(
   }
 );
 
-const TicketConfigModel = mongoose.model("TicketConfig", TicketConfig);
+const TicketConfigModel = mongoose.model("TicketConfig", ticketConfigSchema);
 
 module.exports = TicketConfigModel;
