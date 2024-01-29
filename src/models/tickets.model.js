@@ -16,22 +16,6 @@ const Ticket = mongoose.Schema(
     bookedDate: {
       type: Date,
     },
-    companyId: {
-      type: Schema.Types.ObjectId,
-      ref: "User", // Reference to the User model
-      validate: {
-        validator: async function (value) {
-          // Check if the user with the given _id exists and has the role 'CompanyAdmin'
-          const user = await mongoose.model("User").findOne({
-            _id: value,
-            role: "companyAdmin",
-          });
-
-          return !!user;
-        },
-        message: "Company Admin not found for the given _id",
-      },
-    },
     event: {
       type: Schema.Types.ObjectId,
       ref: "Events",
