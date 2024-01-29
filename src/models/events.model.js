@@ -1,11 +1,17 @@
 const mongoose = require("mongoose");
 const { toJSON } = require("./plugins");
 const Schema = mongoose.Schema;
+const slugify = require("slugify");
+
+const artistSchema = {
+  artistName: {
+    type: String,
+    required: true,
+  },
+  // Add other artist details if needed
+};
 
 const venueSchema = {
-  _id: {
-    type: mongoose.Types.ObjectId,
-  },
   venueName: {
     type: String,
     required: true,
@@ -14,64 +20,80 @@ const venueSchema = {
     type: Date,
     required: true,
   },
-  // can add other details
+  city: {
+    type: String,
+    required: true,
+  },
+  timeZone: {
+    type: String,
+    required: true,
+  },
+  // Add other venue details if needed
 };
 
-// Defining the Event Schema
+const eventImageSchema = {
+  imageurl: {
+    type: String,
+  },
+  isPrimary: {
+    type: Boolean,
+    default: false,
+  },
+};
+
 const eventSchema = mongoose.Schema(
   {
-    // Status of the event (e.g., "Active", "Cancelled")
     status: {
       type: String,
-      default : "ACTIVE",
-      enum:["ACTIVE","CANCELLED","COMPLETED"],
+      default: "ACTIVE",
+      enum: ["ACTIVE", "CANCELLED", "COMPLETED"],
       index: true,
-      // required: true,
     },
     eventName: {
       type: String,
+      required: true,
     },
-    // Reference to the owning company's ObjectId
     eventOwner: {
       type: Schema.Types.ObjectId,
       ref: "User",
       index: true,
     },
-    // Venue where the event takes place
-    venueDetails: [venueSchema],
+    artist: [artistSchema],
+    venues: [venueSchema],
     slug: {
       type: String,
+      required: true,
+      unique: true,
     },
-    // Array of ticket types with reference to "ticket-configs" collection
     ticketTypes: [
       {
         type: Schema.Types.ObjectId,
         ref: "TicketConfig",
       },
     ],
-    eventImages: [
-      {
-        imageurl: {
-          // s3 urls
-          type: String,
-        },
-        isPrimary: {
-          type: Boolean,
-          default: false,
-        },
-      },
-    ],
+    eventImages: [eventImageSchema],
   },
   {
-    timestamps: true, // Adds createdAt and updatedAt fields
+    timestamps: true,
   }
 );
 
-// Adding a plugin to convert the mongoose schema to JSON
+// Generate slug before saving the event
+eventSchema.pre("save", function (next) {
+  if (this.isModified("eventName")) {
+    this.slug = slugify(this.eventName, { lower: true, strict: true });
+  }
+  next();
+});
+
+// Validate that there is one and only one primary image
+eventSchema.path("eventImages").validate(function (value) {
+  const primaryImages = value.filter((image) => image.isPrimary);
+  return primaryImages.length === 1;
+}, "One and only one image must be marked as primary");
+
 eventSchema.plugin(toJSON);
 
-// Creating the Event Model using the defined schema
 const EventModel = mongoose.model("Events", eventSchema);
 
-// Exporting the Event Model
 module.exports = EventModel;
