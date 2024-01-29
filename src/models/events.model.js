@@ -58,7 +58,7 @@ const eventSchema = mongoose.Schema(
       ref: "User",
       index: true,
     },
-    artist: artistSchema,
+    artist: [artistSchema],
     venues: [venueSchema],
     slug: {
       type: String,
