@@ -45,8 +45,8 @@ const eventSchema = mongoose.Schema(
   {
     status: {
       type: String,
-      default: "ACTIVE",
-      enum: ["ACTIVE", "CANCELLED", "COMPLETED"],
+      default: "PLANNED",
+      enum: ["ONGOING", "PLANNED", "COMPLETED", "CANCELLED"],
       index: true,
     },
     eventDescription: {
