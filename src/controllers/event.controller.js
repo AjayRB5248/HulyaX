@@ -5,6 +5,8 @@ const eventService = require("../services/event.service");
 const addEvent = catchAsync(async (req, res) => {
   const payload = req.body;
   const user = req.user;
+  const files = req.files;
+  const { posterImage : primaryImage , images } = files;
   const newEvent = await eventService.addEvent(payload, user);
   res.status(httpStatus.CREATED).send({ newEvent });
 });

@@ -4,12 +4,16 @@ const validate = require("../../middlewares/validate");
 const eventController = require("../../controllers/event.controller");
 const eventValidation = require("../../validations/event.validation");
 const router = express.Router();
+const multer = require('multer');
+
+const storage = multer.memoryStorage();
+const upload = multer({ storage: storage });
 
 router
   .route("/add-new-event")
   .post(
     auth("addNewEvent"),
-    validate(eventValidation.createEvent),
+    upload.fields([{ name: 'posterImage', maxCount: 1 }, { name: 'images', maxCount: 3 }]),
     eventController.addEvent
   );
 
