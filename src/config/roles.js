@@ -1,5 +1,5 @@
 const allRoles = {
-  superAdmin: [],
+  superAdmin: ["manageUsers"],
   companyAdmin: ["addNewEvent","manageUsers"],
   customer:["manageUsers"]
 };
