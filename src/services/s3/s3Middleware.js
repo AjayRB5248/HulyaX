@@ -61,7 +61,7 @@ const getFileMiddleware = (fieldName) => (req, res, next) => {
 const validateEventImagesMiddleware = (fieldNamePrimary, fieldNameSecondary) => (req, res, next) => {
   uploadS3Middleware.fields([
     { name: fieldNamePrimary,maxCount:1},
-    { name: fieldNameSecondary },
+    { name: fieldNameSecondary, maxCount : 10 },
   ])(req, res, (err) => {
     if (err) {
       return res.status(400).json({ message: err.message, err });
@@ -81,7 +81,6 @@ const validateEventImagesMiddleware = (fieldNamePrimary, fieldNameSecondary) => 
     primaryImages = primaryImages?.map(images=>images?.location);
     secondaryImages = secondaryImages?.map(images=>images?.location)
     req.files = { primaryImages, secondaryImages };
-
     next();
   });
 };
