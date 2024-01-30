@@ -58,4 +58,35 @@ const getFileMiddleware = (fieldName) => (req, res, next) => {
   });
 };
 
-module.exports = { getFileMiddleware };
+const validateEventImagesMiddleware = (fieldNamePrimary, fieldNameSecondary) => (req, res, next) => {
+  uploadS3Middleware.fields([
+    { name: fieldNamePrimary,maxCount:1},
+    { name: fieldNameSecondary },
+  ])(req, res, (err) => {
+    if (err) {
+      return res.status(400).json({ message: err.message, err });
+    }
+
+    const { files } = req;
+
+    let primaryImages = files[fieldNamePrimary] || [];
+    let secondaryImages = files[fieldNameSecondary] || [];
+
+    if (primaryImages.length < 1) {
+      return res
+        .status(400)
+        .json({ message: "At least one primary image is required." });
+    }
+
+    primaryImages = primaryImages?.map(images=>images?.location);
+    secondaryImages = secondaryImages?.map(images=>images?.location)
+    req.files = { primaryImages, secondaryImages };
+
+    next();
+  });
+};
+
+
+
+
+module.exports = { getFileMiddleware,validateEventImagesMiddleware };
