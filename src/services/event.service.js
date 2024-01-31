@@ -1,10 +1,11 @@
 const httpStatus = require("http-status");
-const { Event, TicketConfigs } = require("../models");
+const { Event } = require("../models");
 const ApiError = require("../utils/ApiError");
-const mongoose = require("mongoose");
 const TicketConfigModel = require("../models/ticket-configs.model");
+const EventsModel = require("../models/events.model");
 const moment = require("moment");
 const { convertToUTC, convertFromUTC } = require("./timeZoneConverter.service");
+const { eventQueryGen } = require("./queryGenerator.services");
 require("moment-timezone");
 
 const addEvent = async (payload, user) => {
@@ -48,7 +49,7 @@ const addEvent = async (payload, user) => {
     { imageurl: eventImages.primaryImages[0], isPrimary: true },
   ];
 
-  const eventToSave = new Event({
+  const eventToSave = new EventsModel({
     status,
     eventName,
     eventDescription,
@@ -90,7 +91,7 @@ const setupEventTickets = async (eventDoc, ticketSettings) => {
 };
 
 const listEvents = async (filterParams, requestUser) => {
-  const criteria = {};
+  let criteria = {};
 
   // one admin should only be able to list their events - todo : put this condition elsewhere
   if (requestUser.role === "companyAdmin") {
@@ -98,23 +99,15 @@ const listEvents = async (filterParams, requestUser) => {
   }
 
   if (filterParams) {
-    const { eventName, artist } = filterParams;
-    if (eventName) criteria.eventName = eventName;
-    if (artist)
-      criteria.artists = {
-        $elemMatch: {
-          artistName: {
-            $regex: artist,
-            $options: "i",
-          },
-        },
-      };
+    criteria = {
+      ...criteria,
+      ...eventQueryGen.listEventQueryGen(filterParams),
+    };
   }
-  const events = await Event.find(criteria)
+  const events = await EventsModel.find(criteria)
     .sort({ createdAt: -1 })
     .populate("ticketTypes")
     .lean();
-  // TODO : process event dates etc ...
 
   const processedEvents = events
     .map((event) => {
