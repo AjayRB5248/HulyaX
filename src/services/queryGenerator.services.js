@@ -8,7 +8,7 @@ const eventQueryGen = {
   listEventQueryGen: (filterParams) => {
     let criteria = {};
     const { eventName, artist, city, eventDate, venueName } = filterParams;
-    const convertedEventDate = convertToUTC(eventDate);
+    const convertedEventDate = convertToUTC(eventDate,`Australia/${city}`);
 
     // prepare elemtMatch filter if filter is related to venues
     if (city || eventDate || venueName) {
