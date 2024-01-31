@@ -25,7 +25,7 @@ router
   );
 
 router.route("/fetch-events").get(
-  // auth("setupTickets"),
+  auth("listEvents"),
   // validate(eventValidation.setupEventTickets),
   eventController.listEvents
 );

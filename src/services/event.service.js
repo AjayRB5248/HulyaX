@@ -89,8 +89,14 @@ const setupEventTickets = async (eventDoc, ticketSettings) => {
   return updatedEvent;
 };
 
-const listEvents = async (filterParams) => {
+const listEvents = async (filterParams, requestUser) => {
   const criteria = {};
+
+  // one admin should only be able to list their events - todo : put this condition elsewhere
+  if (requestUser.role === "companyAdmin") {
+    criteria.eventOwner = requestUser._id;
+  }
+
   if (filterParams) {
     const { eventName } = filterParams;
     if (eventName) criteria.eventName = eventName;

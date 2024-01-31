@@ -22,7 +22,8 @@ const setupEventTickets = catchAsync(async (req, res) => {
 
 const listEvents = catchAsync(async (req, res) => {
   const filterParams = req.query;
-  const events = await eventService.listEvents(filterParams);
+  const requestUser = req.user;
+  const events = await eventService.listEvents(filterParams,requestUser);
   res.status(httpStatus.CREATED).send({ events });
 });
 
