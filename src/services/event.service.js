@@ -98,8 +98,17 @@ const listEvents = async (filterParams, requestUser) => {
   }
 
   if (filterParams) {
-    const { eventName } = filterParams;
+    const { eventName, artist } = filterParams;
     if (eventName) criteria.eventName = eventName;
+    if (artist)
+      criteria.artists = {
+        $elemMatch: {
+          artistName: {
+            $regex: artist,
+            $options: "i",
+          },
+        },
+      };
   }
   const events = await Event.find(criteria)
     .sort({ createdAt: -1 })
