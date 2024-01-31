@@ -20,7 +20,14 @@ const setupEventTickets = catchAsync(async (req, res) => {
   res.status(httpStatus.CREATED).send({ eventTicketSettings });
 });
 
+const listEvents = catchAsync(async (req, res) => {
+  const filterParams = req.query;
+  const events = await eventService.listEvents(filterParams);
+  res.status(httpStatus.CREATED).send({ events });
+});
+
 module.exports = {
   addEvent,
   setupEventTickets,
+  listEvents,
 };

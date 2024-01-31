@@ -4,6 +4,7 @@ const ApiError = require("../utils/ApiError");
 const mongoose = require("mongoose");
 const TicketConfigModel = require("../models/ticket-configs.model");
 const moment = require("moment");
+const { convertToUTC, convertFromUTC } = require("./timeZoneConverter.service");
 require("moment-timezone");
 
 const addEvent = async (payload, user) => {
@@ -15,12 +16,14 @@ const addEvent = async (payload, user) => {
     venues,
     ticketSettings,
     eventImages,
+    status,
   } = payload;
   const eventOwner = user._id;
 
   const artistData = artists.map((artist) => {
     return {
       artistName: artist.name,
+      genre: artist.genre,
       // other data
     };
   });
@@ -30,10 +33,7 @@ const addEvent = async (payload, user) => {
       venueName: venue.venueName,
       city: venue.city,
       timeZone: venue.timeZone,
-      eventDate: venue.dateOfEvent  // TODO : timezone conversion ( aus time to utc)
-      //  moment(venue.dateOfEvent)
-      //   .tz(venue.timeZone)
-      //   .format("YYYY-MM-DDTHH:mm"),
+      eventDate: convertToUTC(venue.dateOfEvent, venue.timeZone),
     };
   });
 
@@ -49,6 +49,7 @@ const addEvent = async (payload, user) => {
   ];
 
   const eventToSave = new Event({
+    status,
     eventName,
     eventDescription,
     eventOwner,
@@ -72,7 +73,7 @@ const setupEventTickets = async (eventDoc, ticketSettings) => {
       type: tc.type,
       price: tc.price,
       totalSeats: tc.totalSeats,
-      availableSeats: tc.totalSeats // initially , availableSeats is totalSeats
+      availableSeats: tc.totalSeats, // initially , availableSeats is totalSeats
     };
   });
 
@@ -84,11 +85,42 @@ const setupEventTickets = async (eventDoc, ticketSettings) => {
     { _id: eventId },
     { $set: { ticketTypes: insertedTicketSettingIds } },
     { new: true }
-  ).populate('ticketTypes');
+  ).populate("ticketTypes");
   return updatedEvent;
+};
+
+const listEvents = async (filterParams) => {
+  const criteria = {};
+  if (filterParams) {
+    const { eventName } = filterParams;
+    if (eventName) criteria.eventName = eventName;
+  }
+  const events = await Event.find(criteria)
+    .sort({ createdAt: -1 })
+    .populate("ticketTypes")
+    .lean();
+  // TODO : process event dates etc ...
+
+  const processedEvents = events
+    .map((event) => {
+      return {
+        ...event,
+        venues: event.venues
+          .map((e) => {
+            return {
+              ...e,
+              eventDate: convertFromUTC(e.eventDate, e.timeZone),
+            };
+          })
+          .filter(Boolean),
+      };
+    })
+    .filter(Boolean);
+  return processedEvents;
 };
 
 module.exports = {
   addEvent,
   setupEventTickets,
+  listEvents,
 };
