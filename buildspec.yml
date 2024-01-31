@@ -1,5 +1,12 @@
 version: 0.2
 
+env:
+  variables:
+    NODE_VERSION: "16"
+
+runtime-versions:
+  nodejs: 16
+
 phases:
   install:
     commands:
