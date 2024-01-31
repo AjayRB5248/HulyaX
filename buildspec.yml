@@ -14,7 +14,10 @@ phases:
 
   build:
     commands:
-      - npm run dev
+      - npm run dev &
+      - sleep 10  # Wait for 5 minutes (adjust as needed)
+      - pkill -f "npm run dev"  # Terminate the process
+
 
 artifacts:
   files: '**/*'
