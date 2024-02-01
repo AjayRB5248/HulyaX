@@ -34,7 +34,17 @@ const setupEventTickets = {
     })
     .unknown(),
 };
+
+const editEvent = {
+  body: Joi.object()
+    .keys({
+      eventId: Joi.string().required(),
+    })
+    .unknown(),
+};
+
 module.exports = {
   createEvent,
   setupEventTickets,
+  editEvent
 };

@@ -8,7 +8,6 @@ const eventQueryGen = {
   listEventQueryGen: (filterParams) => {
     let criteria = {};
     const { eventName, artist, city, eventDate, venueName } = filterParams;
-    const convertedEventDate = convertToUTC(eventDate,`Australia/${city}`);
 
     // prepare elemtMatch filter if filter is related to venues
     if (city || eventDate || venueName) {
@@ -28,11 +27,13 @@ const eventQueryGen = {
         },
       };
     if (city) criteria.venues["$elemMatch"]["city"] = city;
-    if (eventDate)
+    if (eventDate) {
+      const convertedEventDate = convertToUTC(eventDate, `Australia/${city}`);
       criteria.venues["$elemMatch"]["eventDate"] = {
         $gte: new Date(convertedEventDate.startOf("day").toISOString()),
         $lte: new Date(convertedEventDate.endOf("day").toISOString()),
       };
+    }
     if (venueName)
       criteria.venues["$elemMatch"]["venueName"] = {
         $regex: venueName,

@@ -27,8 +27,16 @@ const listEvents = catchAsync(async (req, res) => {
   res.status(httpStatus.CREATED).send({ events });
 });
 
+const editEvents = catchAsync(async (req, res) => {
+  const payload = req.body;
+  const user = req.user;
+  const modifiedEvent = await eventService.editEvent(payload, user);
+  res.status(httpStatus.CREATED).send({ modifiedEvent });
+});
+
 module.exports = {
   addEvent,
   setupEventTickets,
   listEvents,
+  editEvents
 };

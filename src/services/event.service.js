@@ -127,8 +127,18 @@ const listEvents = async (filterParams, requestUser) => {
   return processedEvents;
 };
 
+const editEvent = async (payload, user) => {
+  const foundEvent = await EventsModel.findOne({
+    _id: payload.eventId,
+    eventOwner: user._id,
+  });
+  if (!foundEvent) throw new Error("Event not found");
+  
+};
+
 module.exports = {
   addEvent,
   setupEventTickets,
   listEvents,
+  editEvent,
 };

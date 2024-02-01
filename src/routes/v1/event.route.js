@@ -30,4 +30,9 @@ router.route("/fetch-events").get(
   eventController.listEvents
 );
 
+router.route('/edit').put(
+  auth("editEvent"),
+  validate(eventValidation.editEvent),
+  eventController.editEvents
+)
 module.exports = router;
