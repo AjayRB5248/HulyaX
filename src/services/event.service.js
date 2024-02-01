@@ -136,9 +136,28 @@ const editEvent = async (payload, user) => {
   
 };
 
+
+const getEvent = async(eventId)=>{
+  const currentEvents = await EventsModel.findById(eventId).populate("ticketTypes").lean();
+  if(!currentEvents) throw new Error("Event not found");
+  const venues = currentEvents.venues
+  .map((e) => {
+    return {
+      ...e,
+      eventDate: convertFromUTC(e.eventDate, e.timeZone),
+    };
+  })
+  .filter(Boolean);
+
+  return {...currentEvents,venues}
+
+  
+}
+
 module.exports = {
   addEvent,
   setupEventTickets,
   listEvents,
   editEvent,
+  getEvent
 };

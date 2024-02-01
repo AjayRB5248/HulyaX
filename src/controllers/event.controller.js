@@ -34,9 +34,18 @@ const editEvents = catchAsync(async (req, res) => {
   res.status(httpStatus.CREATED).send({ modifiedEvent });
 });
 
+const getEvents = catchAsync(async (req, res) => {
+
+  const {eventId} = req?.params || {};
+  const event = await eventService.getEvent(eventId);
+  res.status(httpStatus.CREATED).send({ event });
+
+})
+
 module.exports = {
   addEvent,
   setupEventTickets,
   listEvents,
-  editEvents
+  editEvents,
+  getEvents
 };

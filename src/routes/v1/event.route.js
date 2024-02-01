@@ -35,4 +35,12 @@ router.route('/edit').put(
   validate(eventValidation.editEvent),
   eventController.editEvents
 )
+
+
+router.route('/:eventId').get(
+  auth("listEvents"),
+  validate(eventValidation.getSingleEvents),
+  eventController.getEvents
+)
+
 module.exports = router;
