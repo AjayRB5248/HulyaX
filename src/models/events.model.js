@@ -51,7 +51,7 @@ const eventSchema = mongoose.Schema(
     },
     eventDescription: {
       type: String,
-      required : false,
+      required: false,
     },
     eventName: {
       type: String,
@@ -76,7 +76,13 @@ const eventSchema = mongoose.Schema(
       },
     ],
     eventImages: [eventImageSchema],
+    tags: [
+      {
+        type: String,
+      },
+    ],
   },
+
   {
     timestamps: true,
   }
