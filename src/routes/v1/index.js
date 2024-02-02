@@ -16,13 +16,17 @@ const defaultRoutes = [
   {
     path: "/events",
     route: eventRoute,
-  },
+  }
 ];
 
 
 
 defaultRoutes.forEach((route) => {
   router.use(route.path, route.route);
+});
+
+router.get('/health', (req, res) => {
+  res.status(200).json({ status: 'OK' });
 });
 
 
