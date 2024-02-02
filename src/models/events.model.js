@@ -81,6 +81,10 @@ const eventSchema = mongoose.Schema(
         type: String,
       },
     ],
+    isDeleted: {
+      type: Boolean,
+      default: false,
+    }
   },
 
   {
@@ -91,7 +95,8 @@ const eventSchema = mongoose.Schema(
 // Generate slug before saving the event
 eventSchema.pre("save", function (next) {
   if (this.isModified("eventName")) {
-    this.slug = slugify(this.eventName, { lower: true, strict: true });
+    const timestamp = Date.now();
+    this.slug = slugify(`${this.eventName}-${timestamp}`, { lower: true, strict: true });
   }
   next();
 });

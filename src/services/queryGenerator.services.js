@@ -16,7 +16,7 @@ const eventQueryGen = {
       };
     }
 
-    if (eventName) criteria.eventName = eventName;
+    if (eventName) criteria.eventName = {$regex: eventName,$options:"i"};
     if (artist)
       criteria.artists = {
         $elemMatch: {
