@@ -7,7 +7,8 @@ moment.suppressDeprecationWarnings = true;
 const eventQueryGen = {
   listEventQueryGen: (filterParams) => {
     let criteria = {};
-    const { eventName, artist, city, eventDate, venueName, eventCategory } = filterParams;
+    const { eventName, artist, city, eventDate, venueName, eventCategory } =
+      filterParams;
 
     // prepare elemtMatch filter if filter is related to venues
     if (city || eventDate || venueName) {
@@ -17,7 +18,7 @@ const eventQueryGen = {
     }
     if (eventCategory)
       criteria.eventCategory = { $regex: eventCategory, $options: "i" };
-    if (eventName) criteria.eventName = {$regex: eventName,$options:"i"};
+    if (eventName) criteria.eventName = { $regex: eventName, $options: "i" };
     if (artist)
       criteria.artists = {
         $elemMatch: {
@@ -27,7 +28,11 @@ const eventQueryGen = {
           },
         },
       };
-    if (city) criteria.venues["$elemMatch"]["city"] = city;
+    if (city)
+      criteria.venues["$elemMatch"]["city"] = {
+        $regex: city,
+        $options: "i",
+      };
     if (eventDate) {
       const convertedEventDate = convertToUTC(eventDate, `Australia/${city}`);
       criteria.venues["$elemMatch"]["eventDate"] = {

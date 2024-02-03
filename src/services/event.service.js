@@ -19,7 +19,7 @@ const addEvent = async (payload, user) => {
     eventImages,
     status,
     tags,
-    eventCategory
+    eventCategory,
   } = payload;
   const eventOwner = user._id;
 
@@ -27,7 +27,7 @@ const addEvent = async (payload, user) => {
     return {
       artistName: artist.name,
       genre: artist.genre,
-      category : artist.category
+      category: artist.category,
       // other data
     };
   });
@@ -61,7 +61,7 @@ const addEvent = async (payload, user) => {
     venues: venueData,
     eventImages: eventImageDetails,
     tags,
-    eventCategory
+    eventCategory,
   });
   const saved = await eventToSave.save();
   const updatedEvent = await setupEventTickets(saved, ticketSettings);
@@ -102,19 +102,17 @@ const listEvents = async (filterParams, requestUser) => {
   if (requestUser.role === "companyAdmin") {
     criteria.eventOwner = requestUser._id;
   }
-
   if (filterParams) {
     criteria = {
       ...criteria,
       ...eventQueryGen.listEventQueryGen(filterParams),
     };
   }
+
   const events = await EventsModel.find(criteria)
-    .sort({ createdAt: -1 })
     .populate("ticketTypes")
     .lean();
-
-  const processedEvents = events
+  let processedEvents = events
     .map((event) => {
       return {
         ...event,
@@ -129,6 +127,41 @@ const listEvents = async (filterParams, requestUser) => {
       };
     })
     .filter(Boolean);
+
+    // todo : optimize this
+  if (filterParams.city || filterParams.venueName || filterParams.artist) {
+    const { city, venueName, artist } = filterParams;
+    if (city) {
+      processedEvents = processedEvents.map((event) => {
+        return {
+          ...event,
+          venues: event.venues.filter(
+            (v) => v.city.toLowerCase() === city.toLowerCase()
+          ),
+        };
+      });
+    }
+    if (venueName) {
+      processedEvents = processedEvents.map((event) => {
+        return {
+          ...event,
+          venues: event.venues.filter(
+            (v) => v.venueName.toLowerCase() === venueName.toLowerCase()
+          ),
+        };
+      });
+    }
+    if (artist) {
+      processedEvents = processedEvents.map((event) => {
+        return {
+          ...event,
+          artists: event.artists.filter(
+            (v) => v.artistName.toLowerCase() === artist.toLowerCase()
+          ),
+        };
+      });
+    }
+  }
   return processedEvents;
 };
 
@@ -138,31 +171,29 @@ const editEvent = async (payload, user) => {
     eventOwner: user._id,
   });
   if (!foundEvent) throw new Error("Event not found");
-  
 };
 
-
-const getEvent = async(eventId)=>{
-  const currentEvents = await EventsModel.findById(eventId).populate("ticketTypes").lean();
-  if(!currentEvents) throw new Error("Event not found");
+const getEvent = async (eventId) => {
+  const currentEvents = await EventsModel.findById(eventId)
+    .populate("ticketTypes")
+    .lean();
+  if (!currentEvents) throw new Error("Event not found");
   const venues = currentEvents.venues
-  .map((e) => {
-    return {
-      ...e,
-      eventDate: convertFromUTC(e.eventDate, e.timeZone),
-    };
-  })
-  .filter(Boolean);
+    .map((e) => {
+      return {
+        ...e,
+        eventDate: convertFromUTC(e.eventDate, e.timeZone),
+      };
+    })
+    .filter(Boolean);
 
-  return {...currentEvents,venues}
-
-  
-}
+  return { ...currentEvents, venues };
+};
 
 module.exports = {
   addEvent,
   setupEventTickets,
   listEvents,
   editEvent,
-  getEvent
+  getEvent,
 };
