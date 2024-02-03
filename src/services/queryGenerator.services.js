@@ -7,7 +7,7 @@ moment.suppressDeprecationWarnings = true;
 const eventQueryGen = {
   listEventQueryGen: (filterParams) => {
     let criteria = {};
-    const { eventName, artist, city, eventDate, venueName } = filterParams;
+    const { eventName, artist, city, eventDate, venueName, eventCategory } = filterParams;
 
     // prepare elemtMatch filter if filter is related to venues
     if (city || eventDate || venueName) {
@@ -15,7 +15,8 @@ const eventQueryGen = {
         $elemMatch: {},
       };
     }
-
+    if (eventCategory)
+      criteria.eventCategory = { $regex: eventCategory, $options: "i" };
     if (eventName) criteria.eventName = {$regex: eventName,$options:"i"};
     if (artist)
       criteria.artists = {
