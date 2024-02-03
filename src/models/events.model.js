@@ -84,7 +84,10 @@ const eventSchema = mongoose.Schema(
     isDeleted: {
       type: Boolean,
       default: false,
-    }
+    },
+    eventCategory: {
+      type: String,
+    },
   },
 
   {

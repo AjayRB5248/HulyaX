@@ -18,7 +18,8 @@ const addEvent = async (payload, user) => {
     ticketSettings,
     eventImages,
     status,
-    tags
+    tags,
+    eventCategory
   } = payload;
   const eventOwner = user._id;
 
@@ -26,6 +27,7 @@ const addEvent = async (payload, user) => {
     return {
       artistName: artist.name,
       genre: artist.genre,
+      category : artist.category
       // other data
     };
   });
@@ -58,7 +60,8 @@ const addEvent = async (payload, user) => {
     artists: artistData,
     venues: venueData,
     eventImages: eventImageDetails,
-    tags
+    tags,
+    eventCategory
   });
   const saved = await eventToSave.save();
   const updatedEvent = await setupEventTickets(saved, ticketSettings);
