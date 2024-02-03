@@ -30,12 +30,17 @@ router.route("/fetch-events").get(
   eventController.listEvents
 );
 
-router.route('/edit').put(
+router.route('/edit/:eventId').put(
   auth("editEvent"),
   validate(eventValidation.editEvent),
   eventController.editEvents
 )
 
+router.route('/edit/add-event-items/:eventId').post(
+  auth("editEvent"),
+  // validate(eventValidation.editEvent),
+  eventController.addItemsToEvent
+)
 
 router.route('/:eventId').get(
   auth("listEvents"),

@@ -28,7 +28,6 @@ const addEvent = async (payload, user) => {
       artistName: artist.name,
       genre: artist.genre,
       category: artist.category,
-      // other data
     };
   });
 
@@ -98,6 +97,9 @@ const setupEventTickets = async (eventDoc, ticketSettings) => {
 const listEvents = async (filterParams, requestUser) => {
   let criteria = {};
 
+  if (requestUser.role === "customer") {
+    criteria.isDeleted = { $ne: true };
+  }
   // one admin should only be able to list their events - todo : put this condition elsewhere
   if (requestUser.role === "companyAdmin") {
     criteria.eventOwner = requestUser._id;
@@ -112,23 +114,24 @@ const listEvents = async (filterParams, requestUser) => {
   const events = await EventsModel.find(criteria)
     .populate("ticketTypes")
     .lean();
+
   let processedEvents = events
     .map((event) => {
       return {
         ...event,
-        venues: event.venues
-          .map((e) => {
-            return {
-              ...e,
-              eventDate: convertFromUTC(e.eventDate, e.timeZone),
-            };
-          })
-          .filter(Boolean),
+        // venues: event.venues
+        //   .map((e) => {
+        //     return {
+        //       ...e,
+        //       eventDate: convertFromUTC(e.eventDate, e.timeZone),
+        //     };
+        //   })
+        //   .filter(Boolean),
       };
     })
     .filter(Boolean);
 
-    // todo : optimize this
+  // todo : optimize this
   if (filterParams.city || filterParams.venueName || filterParams.artist) {
     const { city, venueName, artist } = filterParams;
     if (city) {
@@ -166,10 +169,110 @@ const listEvents = async (filterParams, requestUser) => {
 };
 
 const editEvent = async (payload, user) => {
-  const foundEvent = await EventsModel.findOne({
+  const criteria = {
     _id: payload.eventId,
     eventOwner: user._id,
-  });
+  };
+  const foundEvent = await EventsModel.findOne(criteria)
+    .populate("ticketTypes")
+    .lean();
+  if (!foundEvent) throw new Error("Event not found");
+  const {
+    eventName,
+    eventDescription,
+    status,
+    tags,
+    artist,
+    venue,
+    ticketType,
+  } = payload;
+  const updatePayload = {};
+  if (eventName) updatePayload.eventName = eventName;
+  if (eventDescription) updatePayload.eventDescription = eventDescription;
+  if (status) updatePayload.status = status;
+
+  const addToSet = {};
+  if (Array.isArray(tags)) addToSet.tags = { $each: tags };
+
+  //edit artist details
+  if (artist?._id) {
+    let currentArtists = foundEvent.artists;
+    let artistToUpdate = currentArtists
+      .map((a) => {
+        if (a._id + "" === artist?._id + "") {
+          if (artist.artistName) a.artistName = artist.artistName;
+          if (artist.genre) a.genre = artist.genre;
+          if (artist.category) a.category = artist.category;
+        }
+        return a;
+      })
+      .filter(Boolean);
+    if (artistToUpdate.length) updatePayload.artists = artistToUpdate;
+  }
+
+  //edit venues details
+  if (venue?._id) {
+    if (!venue.timeZone) throw new Error("Timezone missing in payload");
+    let currentVenues = foundEvent.venues;
+    let venueToUpdate = currentVenues
+      .map((v) => {
+        if (v._id + "" === venue?._id + "") {
+          if (venue.venueName) v.venueName = venue.venueName;
+          if (venue.city) v.city = venue.city;
+          if (venue.timeZone) v.timeZone = venue.timeZone;
+          if (venue.dateOfEvent)
+            v.eventDate = convertToUTC(venue.dateOfEvent, venue.timeZone);
+        }
+        return v;
+      })
+      .filter(Boolean);
+    if (venueToUpdate.length) updatePayload.venues = venueToUpdate;
+  }
+
+  // edit ticket settings
+  if (ticketType._id) {
+    const updateTicketConfig = {
+      _id: ticketType._id,
+    };
+    const updateTicketPaylpad = {};
+    if (ticketType.price)
+      updateTicketPaylpad.price = parseInt(ticketType.price);
+    if (ticketType.type) updateTicketPaylpad.type = ticketType.type;
+    if (ticketType.totalSeats)
+      updateTicketPaylpad.totalSeats = parseInt(ticketType.totalSeats);
+    if (ticketType.venue) {
+      const foundAttachedEvent = foundEvent.venues.find(
+        (v) => v.venueName === ticketType.venue
+      );
+      if (!foundAttachedEvent?._id)
+        throw new Error("Provide venue name not linked with this event");
+      updateTicketPaylpad.venueId = foundAttachedEvent?._id;
+    }
+    await TicketConfigModel.findOneAndUpdate(
+      updateTicketConfig,
+      updateTicketPaylpad
+    );
+  }
+
+  const updatedEvent = await EventsModel.findOneAndUpdate(
+    criteria,
+    { $set: updatePayload, $addToSet: { ...addToSet } },
+    { new: true }
+  )
+    .populate("ticketTypes")
+    .lean();
+  return updatedEvent;
+};
+
+const deleteEvent = async (eventId, user) => {
+  if (!eventId) throw new Error("EventId not found");
+  const foundEvent = await EventsModel.findOneAndUpdate(
+    {
+      _id: eventId,
+      eventOwner: user._id,
+    },
+    { $set: { isDeleted: false } }
+  );
   if (!foundEvent) throw new Error("Event not found");
 };
 
@@ -190,10 +293,73 @@ const getEvent = async (eventId) => {
   return { ...currentEvents, venues };
 };
 
+const addItemsToEvent = async (payload, user) => {
+  const criteria = {
+    _id: payload.eventId,
+    eventOwner: user._id,
+  };
+  const addToSetPayload = {};
+  const foundEvent = await EventsModel.findOne(criteria)
+    .populate("ticketTypes")
+    .lean();
+  if (!foundEvent) throw new Error("Event not found");
+  const { artist, venue, ticketType } = payload;
+  if (artist) {
+    addToSetPayload.artists = {};
+    if (artist.artistName)
+      addToSetPayload.artists.artistName = artist.artistName;
+    if (artist.genre) addToSetPayload.artists.genre = artist.genre;
+    if (artist.category) addToSetPayload.artists.category = artist.category;
+  }
+
+  if (venue) {
+    addToSetPayload.venues = {};
+    if (venue.timeZone) addToSetPayload.venues.timeZone = venue.timeZone;
+    if (venue.city) addToSetPayload.venues.city = venue.city;
+    if (venue.dateOfEvent)
+      addToSetPayload.venues.eventDate = convertToUTC(
+        venue.dateOfEvent,
+        venue.timeZone
+      );
+  }
+
+  if (ticketType) {
+    const eventId = payload.eventId;
+    const venueId = foundEvent.venues.find(
+      (v) => v.venueName === ticketType.venueName
+    )?._id;
+    if (!venueId)
+      throw new Error("Selected venue does not exist for this event");
+    const totalSeats = parseInt(ticketType.totalSeats);
+    const type = ticketType.type;
+    const price = parseInt(ticketType.price);
+    const newTicketSettins = new TicketConfigModel({
+      eventId,
+      venueId,
+      totalSeats,
+      availableSeats: totalSeats,
+      type,
+      price,
+    });
+    const saved = await newTicketSettins.save();
+    addToSetPayload.ticketTypes = saved._id;
+  }
+  const updatedEvent = await EventsModel.findOneAndUpdate(
+    criteria,
+    { $addToSet: { ...addToSetPayload } },
+    { new: true }
+  )
+    .populate("ticketTypes")
+    .lean();
+  return updatedEvent;
+};
+
 module.exports = {
   addEvent,
   setupEventTickets,
   listEvents,
   editEvent,
   getEvent,
+  deleteEvent,
+  addItemsToEvent,
 };

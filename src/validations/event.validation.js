@@ -36,7 +36,7 @@ const setupEventTickets = {
 };
 
 const editEvent = {
-  body: Joi.object()
+  params: Joi.object()
     .keys({
       eventId: Joi.string().required(),
     })

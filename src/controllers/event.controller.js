@@ -23,29 +23,44 @@ const setupEventTickets = catchAsync(async (req, res) => {
 const listEvents = catchAsync(async (req, res) => {
   const filterParams = req.query;
   const requestUser = req.user;
-  const events = await eventService.listEvents(filterParams,requestUser);
+  const events = await eventService.listEvents(filterParams, requestUser);
   res.status(httpStatus.CREATED).send({ events });
 });
 
 const editEvents = catchAsync(async (req, res) => {
   const payload = req.body;
   const user = req.user;
+  payload.eventId = req.params.eventId;
   const modifiedEvent = await eventService.editEvent(payload, user);
   res.status(httpStatus.CREATED).send({ modifiedEvent });
 });
 
-const getEvents = catchAsync(async (req, res) => {
+// Add artist , venue, ticket to an event
+const addItemsToEvent = catchAsync(async (req, res) => {
+  const payload = req.body;
+  const user = req.user;
+  payload.eventId = req.params.eventId;
+  const modifiedEvent = await eventService.addItemsToEvent(payload, user);
+  res.status(httpStatus.CREATED).send({ modifiedEvent });
+});
 
-  const {eventId} = req?.params || {};
+const deleteEvent = catchAsync(async (req, res) => {
+  const { eventId } = req.params.eventId;
+  const user = req.user;
+  const modifiedEvent = await eventService.deleteEvent(eventId, user);
+  res.status(httpStatus.CREATED).send({ modifiedEvent });
+});
+const getEvents = catchAsync(async (req, res) => {
+  const { eventId } = req?.params || {};
   const event = await eventService.getEvent(eventId);
   res.status(httpStatus.CREATED).send({ event });
-
-})
+});
 
 module.exports = {
   addEvent,
   setupEventTickets,
   listEvents,
   editEvents,
-  getEvents
+  getEvents,
+  addItemsToEvent
 };

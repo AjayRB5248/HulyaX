@@ -8,6 +8,12 @@ const artistSchema = {
     type: String,
     required: true,
   },
+  genre: {
+    type: String,
+  },
+  category: {
+    type: String,
+  },
   // Add other artist details if needed
 };
 
@@ -99,7 +105,23 @@ const eventSchema = mongoose.Schema(
 eventSchema.pre("save", function (next) {
   if (this.isModified("eventName")) {
     const timestamp = Date.now();
-    this.slug = slugify(`${this.eventName}-${timestamp}`, { lower: true, strict: true });
+    this.slug = slugify(`${this.eventName}-${timestamp}`, {
+      lower: true,
+      strict: true,
+    });
+  }
+  next();
+});
+
+eventSchema.pre("findOneAndUpdate", function (next) {
+  const update = this.getUpdate();
+  if ("eventName" in update.$set) {
+    if (typeof update.$set.eventName === "string") {
+      this._update.$set.slug = slugify(update.$set.eventName, {
+        lower: true,
+        strict: true,
+      });
+    }
   }
   next();
 });
