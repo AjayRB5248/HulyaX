@@ -1,9 +1,13 @@
 const passport = require('passport');
 const httpStatus = require('http-status');
 const ApiError = require('../utils/ApiError');
-const { roleRights } = require('../config/roles');
+const { roleRights, publicRoutes } = require('../config/roles');
 
 const verifyCallback = (req, resolve, reject, requiredRights) => async (err, user, info) => {
+  if(isPublicRoute(req.url)){
+    req.user = user;
+    resolve();
+  }
   if (err || info || !user) {
     return reject(new ApiError(httpStatus.UNAUTHORIZED, 'Please authenticate'));
   }
@@ -27,5 +31,10 @@ const auth = (...requiredRights) => async (req, res, next) => {
     .then(() => next())
     .catch((err) => next(err));
 };
+
+const isPublicRoute = (requestedUrl) => {
+  const isPublicRoute = publicRoutes.some(route => requestedUrl.includes(route));
+  return isPublicRoute;
+}
 
 module.exports = auth;

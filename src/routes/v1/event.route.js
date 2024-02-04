@@ -25,7 +25,7 @@ router
   );
 
 router.route("/fetch-events").get(
-  auth("listEvents"),
+  auth(),
   // validate(eventValidation.setupEventTickets),
   eventController.listEvents
 );
@@ -39,7 +39,7 @@ router.route('/edit/:eventId').put(
 
 router.route('/edit/add-event-items/:eventId').post(
   auth("editEvent"),
-  validateEventImagesMiddleware(null,"images"),  // can add secondary images from here
+  validateEventImagesMiddleware("images"),  // can add secondary images from here
   // validate(eventValidation.editEvent),
   eventController.addItemsToEvent
 )
