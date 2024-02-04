@@ -9,20 +9,23 @@ const Ticket = mongoose.Schema(
       default: "PENDING",
       enum: ["PENDING", "CONFIRMED", "CANCELLED"],
     },
-    ticketType: {
+    ticketTypeId: {
       type: Schema.Types.ObjectId,
       ref: "TicketConfig",
     },
     bookedDate: {
       type: Date,
     },
-    event: {
+    eventId: {
       type: Schema.Types.ObjectId,
       ref: "Events",
     },
     customer: {
       type: Schema.Types.ObjectId,
       ref: "User",
+    },
+    confirmationCode: {
+      type: Schema.Types.Number, // or could be qr or uuid
     },
   },
   {

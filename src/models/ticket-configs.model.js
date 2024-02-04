@@ -37,7 +37,7 @@ const ticketConfigSchema = mongoose.Schema(
         message: "Available seats cannot be greater than total seats",
       },
     },
-    purchasedCount: {
+    soldSeats: {
       type: Number,
       default: 0,
     },
