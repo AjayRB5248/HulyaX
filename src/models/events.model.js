@@ -59,6 +59,10 @@ const eventSchema = mongoose.Schema(
       type: String,
       required: false,
     },
+    videoUrl: {
+      type: String,
+      required: false,
+    },
     eventName: {
       type: String,
       required: true,

@@ -20,6 +20,7 @@ const addEvent = async (payload, user) => {
     status,
     tags,
     eventCategory,
+    videoUrl
   } = payload;
   const eventOwner = user._id;
 
@@ -61,6 +62,7 @@ const addEvent = async (payload, user) => {
     eventImages: eventImageDetails,
     tags,
     eventCategory,
+    videoUrl
   });
   const saved = await eventToSave.save();
   const updatedEvent = await setupEventTickets(saved, ticketSettings);
@@ -119,14 +121,6 @@ const listEvents = async (filterParams, requestUser) => {
     .map((event) => {
       return {
         ...event,
-        // venues: event.venues
-        //   .map((e) => {
-        //     return {
-        //       ...e,
-        //       eventDate: convertFromUTC(e.eventDate, e.timeZone),
-        //     };
-        //   })
-        //   .filter(Boolean),
       };
     })
     .filter(Boolean);
@@ -186,10 +180,12 @@ const editEvent = async (payload, user) => {
     venue,
     ticketType,
     eventImages,
+    videoUrl
   } = payload;
   const updatePayload = {};
   if (eventName) updatePayload.eventName = eventName;
   if (eventDescription) updatePayload.eventDescription = eventDescription;
+  if (videoUrl) updatePayload.videoUrl = videoUrl;
   if (status) updatePayload.status = status;
   if (
     Array.isArray(eventImages.primaryImages) &&
