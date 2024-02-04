@@ -46,6 +46,15 @@ const addItemsToEvent = catchAsync(async (req, res) => {
   res.status(httpStatus.CREATED).send({ modifiedEvent });
 });
 
+// Add artist , venue, ticket to an event
+const removeItemsFromEvent = catchAsync(async (req, res) => {
+  const payload = req.body;
+  const user = req.user;
+  payload.eventId = req.params.eventId;
+  const modifiedEvent = await eventService.removeItemsFromEvent(payload, user);
+  res.status(httpStatus.CREATED).send({ modifiedEvent });
+});
+
 const deleteEvent = catchAsync(async (req, res) => {
   const { eventId } = req.params.eventId;
   const user = req.user;
@@ -65,5 +74,6 @@ module.exports = {
   listEvents,
   editEvents,
   getEvents,
-  addItemsToEvent
+  addItemsToEvent,
+  removeItemsFromEvent
 };

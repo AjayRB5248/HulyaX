@@ -299,7 +299,7 @@ const getEvent = async (eventId) => {
     .map((e) => {
       return {
         ...e,
-        eventDate: convertFromUTC(e.eventDate, e.timeZone),
+        // eventDate: convertFromUTC(e.eventDate, e.timeZone),  : conversoin should be at FE
       };
     })
     .filter(Boolean);
@@ -385,6 +385,50 @@ const addItemsToEvent = async (payload, user) => {
   return updatedEvent;
 };
 
+const removeItemsFromEvent = async (payload, user) => {
+  const criteria = {
+    _id: payload.eventId,
+    eventOwner: user._id,
+  };
+  const foundEvent = await EventsModel.findOne(criteria)
+    .populate("ticketTypes")
+    .lean();
+  if (!foundEvent) throw new Error("Event not found");
+  const { ticketTypeId, artistId, venueId, eventImageId } = payload;
+  const updatePayload = {
+    $pull: {},
+  };
+
+  if (artistId)
+    updatePayload.$pull.artists = {
+      _id: artistId,
+    };
+
+  if (venueId)
+    updatePayload.$pull.venues = {
+      _id: venueId,
+    };
+
+  if (eventImageId)
+    updatePayload.$pull.eventImages = {
+      _id: eventImageId,
+    };
+
+  if (ticketTypeId) {
+    await TicketConfigModel.findByIdAndRemove(ticketTypeId);
+    updatePayload.$pull.ticketTypes = ticketTypeId;
+  }
+
+  const updatedEvent = await EventsModel.findOneAndUpdate(
+    criteria,
+    updatePayload,
+    { new: true }
+  )
+    .populate("ticketTypes")
+    .lean();
+  return updatedEvent;
+};
+
 module.exports = {
   addEvent,
   setupEventTickets,
@@ -393,4 +437,5 @@ module.exports = {
   getEvent,
   deleteEvent,
   addItemsToEvent,
+  removeItemsFromEvent,
 };

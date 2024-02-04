@@ -7,6 +7,7 @@ const router = express.Router();
 const {
   validateEventImagesMiddleware,
 } = require("../../services/s3/s3Middleware");
+const { multerParser } = require("../../middlewares/multer");
 
 router
   .route("/add-new-event")
@@ -37,12 +38,20 @@ router.route('/edit/:eventId').put(
   eventController.editEvents
 )
 
-router.route('/edit/add-event-items/:eventId').post(
+router.route("/edit/add-event-items/:eventId").post(
   auth("editEvent"),
-  validateEventImagesMiddleware("images"),  // can add secondary images from here
+  validateEventImagesMiddleware("images"), // can add secondary images from here
   // validate(eventValidation.editEvent),
   eventController.addItemsToEvent
-)
+);
+
+router
+  .route("/edit/remove-event-items/:eventId")
+  .delete(
+    auth("editEvent"),
+    multerParser,
+    eventController.removeItemsFromEvent
+  );
 
 router.route('/:eventId').get(
   auth("listEvents"),
