@@ -32,12 +32,14 @@ router.route("/fetch-events").get(
 
 router.route('/edit/:eventId').put(
   auth("editEvent"),
+  validateEventImagesMiddleware("posterImage", "images"),
   validate(eventValidation.editEvent),
   eventController.editEvents
 )
 
 router.route('/edit/add-event-items/:eventId').post(
   auth("editEvent"),
+  validateEventImagesMiddleware(null,"images"),  // can add secondary images from here
   // validate(eventValidation.editEvent),
   eventController.addItemsToEvent
 )

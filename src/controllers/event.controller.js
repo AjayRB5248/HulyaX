@@ -30,6 +30,7 @@ const listEvents = catchAsync(async (req, res) => {
 const editEvents = catchAsync(async (req, res) => {
   const payload = req.body;
   const user = req.user;
+  payload.eventImages = req.files;
   payload.eventId = req.params.eventId;
   const modifiedEvent = await eventService.editEvent(payload, user);
   res.status(httpStatus.CREATED).send({ modifiedEvent });
@@ -40,6 +41,7 @@ const addItemsToEvent = catchAsync(async (req, res) => {
   const payload = req.body;
   const user = req.user;
   payload.eventId = req.params.eventId;
+  payload.eventImages = req.files;
   const modifiedEvent = await eventService.addItemsToEvent(payload, user);
   res.status(httpStatus.CREATED).send({ modifiedEvent });
 });
@@ -50,6 +52,7 @@ const deleteEvent = catchAsync(async (req, res) => {
   const modifiedEvent = await eventService.deleteEvent(eventId, user);
   res.status(httpStatus.CREATED).send({ modifiedEvent });
 });
+
 const getEvents = catchAsync(async (req, res) => {
   const { eventId } = req?.params || {};
   const event = await eventService.getEvent(eventId);

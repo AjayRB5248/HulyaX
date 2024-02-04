@@ -72,7 +72,7 @@ const validateEventImagesMiddleware = (fieldNamePrimary, fieldNameSecondary) => 
     let primaryImages = files[fieldNamePrimary] || [];
     let secondaryImages = files[fieldNameSecondary] || [];
 
-    if (primaryImages.length < 1) {
+    if (primaryImages.length < 1 && !req.originalUrl.includes("/events/edit")) {
       return res
         .status(400)
         .json({ message: "At least one primary image is required." });

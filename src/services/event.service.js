@@ -185,11 +185,25 @@ const editEvent = async (payload, user) => {
     artist,
     venue,
     ticketType,
+    eventImages,
   } = payload;
   const updatePayload = {};
   if (eventName) updatePayload.eventName = eventName;
   if (eventDescription) updatePayload.eventDescription = eventDescription;
   if (status) updatePayload.status = status;
+  if (
+    Array.isArray(eventImages.primaryImages) &&
+    eventImages.primaryImages.length
+  ) {
+    updatePayload.eventImages = foundEvent.eventImages
+      .map((image) => {
+        if (image.isPrimary) {
+          image.imageurl = eventImages.primaryImages[0];
+        }
+        return image;
+      })
+      .filter(Boolean);
+  }
 
   const addToSet = {};
   if (Array.isArray(tags)) addToSet.tags = { $each: tags };
@@ -230,7 +244,7 @@ const editEvent = async (payload, user) => {
   }
 
   // edit ticket settings
-  if (ticketType._id) {
+  if (ticketType?._id) {
     const updateTicketConfig = {
       _id: ticketType._id,
     };
@@ -303,7 +317,7 @@ const addItemsToEvent = async (payload, user) => {
     .populate("ticketTypes")
     .lean();
   if (!foundEvent) throw new Error("Event not found");
-  const { artist, venue, ticketType } = payload;
+  const { artist, venue, ticketType, eventImages } = payload;
   if (artist) {
     addToSetPayload.artists = {};
     if (artist.artistName)
@@ -326,7 +340,7 @@ const addItemsToEvent = async (payload, user) => {
   if (ticketType) {
     const eventId = payload.eventId;
     const venueId = foundEvent.venues.find(
-      (v) => v.venueName === ticketType.venueName
+      (v) => v.venueName === ticketType.venueName?.trim()
     )?._id;
     if (!venueId)
       throw new Error("Selected venue does not exist for this event");
@@ -344,9 +358,26 @@ const addItemsToEvent = async (payload, user) => {
     const saved = await newTicketSettins.save();
     addToSetPayload.ticketTypes = saved._id;
   }
+
+  const updatePayload = { $addToSet: { ...addToSetPayload } };
+  const { primaryImages, secondaryImages } = eventImages;
+  // dont update primary/poster image from this route
+  if (Array.isArray(secondaryImages) && secondaryImages.length) {
+    const imagesToAdd = secondaryImages
+      .map((image) => {
+        return {
+          imageurl: image,
+          isPrimary: false,
+        };
+      })
+      .filter(Boolean);
+    updatePayload["$push"] = {
+      eventImages: imagesToAdd,
+    };
+  }
   const updatedEvent = await EventsModel.findOneAndUpdate(
     criteria,
-    { $addToSet: { ...addToSetPayload } },
+    updatePayload,
     { new: true }
   )
     .populate("ticketTypes")
