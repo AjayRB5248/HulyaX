@@ -2,6 +2,7 @@ const express = require("express");
 const authRoute = require("./auth.route");
 const userRoute = require("./user.route");
 const eventRoute = require("./event.route");
+const ticketRoute = require("./tickets.route");
 const router = express.Router();
 
 const defaultRoutes = [
@@ -18,8 +19,8 @@ const defaultRoutes = [
     route: eventRoute,
   },
   {
-    path: "tickets",
-    route: require("./tickets.route"),
+    path: "/tickets",
+    route: ticketRoute,
   },
 ];
 
