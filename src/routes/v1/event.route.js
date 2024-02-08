@@ -59,4 +59,10 @@ router.route('/:eventId').get(
   eventController.getEvents
 )
 
+router.route('/:eventId').delete(
+  auth("deleteEvent"),
+  validate(eventValidation.getSingleEvents),
+  eventController.deleteEvent
+)
+
 module.exports = router;

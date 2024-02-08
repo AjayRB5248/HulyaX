@@ -276,14 +276,15 @@ const editEvent = async (payload, user) => {
 
 const deleteEvent = async (eventId, user) => {
   if (!eventId) throw new Error("EventId not found");
-  const foundEvent = await EventsModel.findOneAndUpdate(
-    {
-      _id: eventId,
-      eventOwner: user._id,
-    },
-    { $set: { isDeleted: false } }
-  );
+  const critera = {
+    _id: eventId,
+    eventOwner: user._id,
+  };
+  if (user.role === "companyAdmin") delete critera.eventOwner; // todo: add common checker
+  const foundEvent = await EventsModel.findOne(critera);
   if (!foundEvent) throw new Error("Event not found");
+  const deletedEvent = await EventsModel.findOneAndUpdate(critera, { $set: { isDeleted: true } },{new: true}).lean();
+  return deletedEvent;
 };
 
 const getEvent = async (eventId) => {

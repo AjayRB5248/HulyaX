@@ -56,10 +56,10 @@ const removeItemsFromEvent = catchAsync(async (req, res) => {
 });
 
 const deleteEvent = catchAsync(async (req, res) => {
-  const { eventId } = req.params.eventId;
+  const eventId  = req.params.eventId;
   const user = req.user;
-  const modifiedEvent = await eventService.deleteEvent(eventId, user);
-  res.status(httpStatus.CREATED).send({ modifiedEvent });
+  const deletedEvent = await eventService.deleteEvent(eventId, user);
+  res.status(httpStatus.CREATED).send({ deletedEvent });
 });
 
 const getEvents = catchAsync(async (req, res) => {
@@ -75,5 +75,6 @@ module.exports = {
   editEvents,
   getEvents,
   addItemsToEvent,
-  removeItemsFromEvent
+  removeItemsFromEvent,
+  deleteEvent
 };
