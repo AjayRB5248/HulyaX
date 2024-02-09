@@ -1,17 +1,20 @@
+const { PERMISSION_CONSTANTS } = require("../utility/constants");
+
 // TODO: add these roles at db level and configurable by superadmin ( superadmin should be able to modify access)
 const allRoles = {
-  superAdmin: ["manageUsers", "listEvents", "editEvent", "purchaseTicket"],
+  superAdmin: Object.values(PERMISSION_CONSTANTS), // allow all permissions
   companyAdmin: [
-    "addNewEvent",
-    "manageUsers",
-    "listEvents",
-    "editEvent",
-    "purchaseTicket",
+    PERMISSION_CONSTANTS.ADD_EVENTS,
+    PERMISSION_CONSTANTS.LIST_EVENTS,
+    PERMISSION_CONSTANTS.EDIT_EVENTS,
+    PERMISSION_CONSTANTS.PURCHASE_TICKETS,
   ],
-  customer: ["manageUsers", "listEvents", "purchaseTicket"],
+  customer: [
+    PERMISSION_CONSTANTS.MANAGE_USERS,
+    PERMISSION_CONSTANTS.LIST_EVENTS,
+    PERMISSION_CONSTANTS.PURCHASE_TICKETS,
+  ],
 };
-
-const publicRoutes = ["fetch-events"];
 
 const roles = Object.keys(allRoles);
 const roleRights = new Map(Object.entries(allRoles));
@@ -19,5 +22,4 @@ const roleRights = new Map(Object.entries(allRoles));
 module.exports = {
   roles,
   roleRights,
-  publicRoutes,
 };

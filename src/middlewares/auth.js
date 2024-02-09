@@ -1,7 +1,8 @@
 const passport = require('passport');
 const httpStatus = require('http-status');
 const ApiError = require('../utils/ApiError');
-const { roleRights, publicRoutes } = require('../config/roles');
+const { roleRights } = require('../config/roles');
+const { PUBLIC_ROUTES } = require("../utility/constants");
 
 const verifyCallback = (req, resolve, reject, requiredRights) => async (err, user, info) => {
   if(isPublicRoute(req.url)){
@@ -33,7 +34,7 @@ const auth = (...requiredRights) => async (req, res, next) => {
 };
 
 const isPublicRoute = (requestedUrl) => {
-  const isPublicRoute = publicRoutes.some(route => requestedUrl.includes(route));
+  const isPublicRoute = PUBLIC_ROUTES.some(route => requestedUrl?.toUpperCase().includes(route));
   return isPublicRoute;
 }
 

@@ -8,11 +8,12 @@ const {
   validateEventImagesMiddleware,
 } = require("../../services/s3/s3Middleware");
 const { multerParser } = require("../../middlewares/multer");
+const { PERMISSION_CONSTANTS } = require("../../utility/constants");
 
 router
   .route("/add-new-event")
   .post(
-    auth("addNewEvent"),
+    auth(PERMISSION_CONSTANTS.ADD_EVENTS),
     validateEventImagesMiddleware("posterImage", "images"),
     eventController.addEvent
   );
@@ -20,7 +21,7 @@ router
 router
   .route("/setup-event-tickets")
   .post(
-    auth("setupTickets"),
+    auth(PERMISSION_CONSTANTS.SETUP_TICKETS),
     validate(eventValidation.setupEventTickets),
     eventController.setupEventTickets
   );
@@ -32,14 +33,14 @@ router.route("/fetch-events").get(
 );
 
 router.route('/edit/:eventId').put(
-  auth("editEvent"),
+  auth(PERMISSION_CONSTANTS.EDIT_EVENTS),
   validateEventImagesMiddleware("posterImage", "images"),
   validate(eventValidation.editEvent),
   eventController.editEvents
 )
 
 router.route("/edit/add-event-items/:eventId").post(
-  auth("editEvent"),
+  auth(PERMISSION_CONSTANTS.EDIT_EVENTS),
   validateEventImagesMiddleware("images"), // can add secondary images from here
   // validate(eventValidation.editEvent),
   eventController.addItemsToEvent
@@ -48,13 +49,13 @@ router.route("/edit/add-event-items/:eventId").post(
 router
   .route("/edit/remove-event-items/:eventId")
   .delete(
-    auth("editEvent"),
+    auth(PERMISSION_CONSTANTS.EDIT_EVENTS),
     multerParser,
     eventController.removeItemsFromEvent
   );
 
 router.route('/:eventId').get(
-  auth("listEvents"),
+  auth(PERMISSION_CONSTANTS.LIST_EVENTS),
   validate(eventValidation.getSingleEvents),
   eventController.getEvents
 )
