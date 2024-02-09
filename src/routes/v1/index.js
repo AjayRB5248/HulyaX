@@ -20,7 +20,7 @@ const defaultRoutes = [
   {
     path: "tickets",
     route: require("./tickets.route"),
-  },
+  }
 ];
 
 defaultRoutes.forEach((route) => {
@@ -30,5 +30,7 @@ defaultRoutes.forEach((route) => {
 router.get("/health", (req, res) => {
   res.status(200).json({ status: "OK" });
 });
+
+router.use("/superadmin" , require('./superadmin.route'))
 
 module.exports = router;

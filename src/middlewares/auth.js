@@ -38,4 +38,26 @@ const isPublicRoute = (requestedUrl) => {
   return isPublicRoute;
 }
 
-module.exports = auth;
+const superAdminCheck = (req, res, next) => {
+    passport.authenticate("jwt", { session: false }, (err, user, info) => {
+      if (err) {
+        next(err);
+      }
+      if (!user) {
+         next(new Error('Authentication failed'));
+      }
+      const userAdmin = user;
+      if (userAdmin && userAdmin.role === 'superAdmin') {
+        req.user = userAdmin;
+        next();
+      } else {
+        next(new Error('You do not have permission to access this resource'));
+      }
+    })(req, res, next);
+};
+
+
+module.exports = {
+  auth,
+  superAdminCheck 
+};

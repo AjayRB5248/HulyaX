@@ -1,4 +1,5 @@
-export const PERMISSION_CONSTANTS = { //add these in db
+const PERMISSION_CONSTANTS = {
+  //add these in db
   // AUTH RELATED PERMISSIONS
   MANAGE_USERS: "MANAGE_USERS",
 
@@ -13,6 +14,11 @@ export const PERMISSION_CONSTANTS = { //add these in db
   //TODO : add other permissions
 };
 
-export const PUBLIC_ROUTES = {
+const PUBLIC_ROUTES = {
   FETCH_EVENTS: "FETCH-EVENTS",
+};
+
+module.exports = {
+  PERMISSION_CONSTANTS,
+  PUBLIC_ROUTES,
 };
