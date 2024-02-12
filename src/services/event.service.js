@@ -20,7 +20,7 @@ const addEvent = async (payload, user) => {
     status,
     tags,
     eventCategory,
-    videoUrl
+    videoUrl,
   } = payload;
   const eventOwner = user._id;
 
@@ -62,7 +62,7 @@ const addEvent = async (payload, user) => {
     eventImages: eventImageDetails,
     tags,
     eventCategory,
-    videoUrl
+    videoUrl,
   });
   const saved = await eventToSave.save();
   const updatedEvent = await setupEventTickets(saved, ticketSettings);
@@ -167,6 +167,7 @@ const editEvent = async (payload, user) => {
     _id: payload.eventId,
     eventOwner: user._id,
   };
+  if (user.role === "superAdmin") delete criteria.eventOwner;
   const foundEvent = await EventsModel.findOne(criteria)
     .populate("ticketTypes")
     .lean();
@@ -180,7 +181,7 @@ const editEvent = async (payload, user) => {
     venue,
     ticketType,
     eventImages,
-    videoUrl
+    videoUrl,
   } = payload;
   const updatePayload = {};
   if (eventName) updatePayload.eventName = eventName;
@@ -276,13 +277,14 @@ const editEvent = async (payload, user) => {
 
 const deleteEvent = async (eventId, user) => {
   if (!eventId) throw new Error("EventId not found");
-  const foundEvent = await EventsModel.findOneAndUpdate(
-    {
-      _id: eventId,
-      eventOwner: user._id,
-    },
-    { $set: { isDeleted: false } }
-  );
+  const criteria = {
+    _id: eventId,
+    eventOwner: user._id,
+  };
+  if (user.role === "superAdmin") delete criteria.eventOwner;
+  const foundEvent = await EventsModel.findOneAndUpdate(criteria, {
+    $set: { isDeleted: false },
+  });
   if (!foundEvent) throw new Error("Event not found");
 };
 
@@ -308,6 +310,7 @@ const addItemsToEvent = async (payload, user) => {
     _id: payload.eventId,
     eventOwner: user._id,
   };
+  if (user.role === "superAdmin") delete criteria.eventOwner;
   const addToSetPayload = {};
   const foundEvent = await EventsModel.findOne(criteria)
     .populate("ticketTypes")
@@ -386,6 +389,7 @@ const removeItemsFromEvent = async (payload, user) => {
     _id: payload.eventId,
     eventOwner: user._id,
   };
+  if (user.role === "superAdmin") delete criteria.eventOwner;
   const foundEvent = await EventsModel.findOne(criteria)
     .populate("ticketTypes")
     .lean();

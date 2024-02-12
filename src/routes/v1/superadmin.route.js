@@ -7,10 +7,12 @@ const superadminController = require("../../controllers/superadmin.controller");
 const {
   validateEventImagesMiddleware,
 } = require("../../services/s3/s3Middleware");
-const { PERMISSION_CONSTANTS } = require("../../utility/constants");
+
+
 router.route("/register").post(authController.register);
 router
   .route("/permission-list")
-  .get(superAdminCheck, superadminController.fetchPermissionList);
+  .get(superAdminCheck, superadminController.fetchPermissionList)
+  .put(superAdminCheck, superadminController.updaterPermission);
 
 module.exports = router;
