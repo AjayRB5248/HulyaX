@@ -2,6 +2,7 @@ const mongoose = require("mongoose");
 const { toJSON } = require("./plugins");
 const Schema = mongoose.Schema;
 const slugify = require("slugify");
+const { EVENT_STATUS } = require("../utility/constants");
 
 const artistSchema = {
   artistName: {
@@ -51,8 +52,12 @@ const eventSchema = mongoose.Schema(
   {
     status: {
       type: String,
-      default: "PLANNED",
-      enum: ["ONGOING", "PLANNED", "COMPLETED", "CANCELLED"],
+      default: EVENT_STATUS.PLANNED,
+      enum: Object.values(EVENT_STATUS),
+      index: true,
+    },
+    secondaryStatus : {
+      type : [String], // secondary status may be : TRENDING, SPECIAL, LIMITED
       index: true,
     },
     eventDescription: {

@@ -1,6 +1,7 @@
 const httpStatus = require("http-status");
 const catchAsync = require("../utils/catchAsync");
 const eventService = require("../services/event.service");
+const { EVENT_STATUS } = require("../utility/constants");
 
 const addEvent = catchAsync(async (req, res) => {
   const payload = req.body;
@@ -68,6 +69,11 @@ const getEvents = catchAsync(async (req, res) => {
   res.status(httpStatus.CREATED).send({ event });
 });
 
+const getEventStatuses = catchAsync(async (req, res) => {
+  const eventStatuses = Object.values(EVENT_STATUS)
+  res.status(httpStatus.CREATED).send({ eventStatuses });
+});
+
 module.exports = {
   addEvent,
   setupEventTickets,
@@ -75,5 +81,6 @@ module.exports = {
   editEvents,
   getEvents,
   addItemsToEvent,
-  removeItemsFromEvent
+  removeItemsFromEvent,
+  getEventStatuses
 };

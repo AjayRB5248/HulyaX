@@ -13,6 +13,11 @@ router.route("/register").post(authController.register);
 router
   .route("/permission-list")
   .get(superAdminCheck, superadminController.fetchPermissionList)
-  .put(superAdminCheck, superadminController.updaterPermission);
+  .put(superAdminCheck, superadminController.updatePermission);
+
+router.route("/:eventId").post(
+  superAdminCheck,
+  superadminController.editEventBySuperAdmin
+)
 
 module.exports = router;

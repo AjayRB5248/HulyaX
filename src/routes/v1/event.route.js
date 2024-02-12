@@ -27,7 +27,7 @@ router
   );
 
 router.route("/fetch-events").get(
-  auth(),
+  // auth(),
   // validate(eventValidation.setupEventTickets),
   eventController.listEvents
 );
@@ -60,4 +60,8 @@ router.route('/:eventId').get(
   eventController.getEvents
 )
 
+router.route('/event-status-list').get(
+  // auth(PERMISSION_CONSTANTS.LIST_EVENTS),
+  eventController.getEventStatuses
+)
 module.exports = router;
