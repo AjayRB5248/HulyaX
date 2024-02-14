@@ -18,10 +18,10 @@ const updatePermission = catchAsync(async (req, res) => {
     return res
       .status(httpStatus.INTERNAL_SERVER_ERROR)
       .send("userId is required");
-  if (!permissions?.length)
-    return res
-      .status(httpStatus.INTERNAL_SERVER_ERROR)
-      .send("Please provide permissions to update");
+  // if (!permissions?.length)
+  //   return res
+  //     .status(httpStatus.INTERNAL_SERVER_ERROR)
+  //     .send("Please provide permissions to update");
   const updated = await UserModel.findOneAndUpdate(
     { _id: userId },
     { $set: { permissions: permissions } },

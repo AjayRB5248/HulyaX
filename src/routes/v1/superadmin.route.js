@@ -15,9 +15,9 @@ router
   .get(superAdminCheck, superadminController.fetchPermissionList)
   .put(superAdminCheck, superadminController.updatePermission);
 
-router.route("/:eventId").post(
+router.route("/events/:eventId").put(
   superAdminCheck,
   superadminController.editEventBySuperAdmin
-)
+);
 
 module.exports = router;
