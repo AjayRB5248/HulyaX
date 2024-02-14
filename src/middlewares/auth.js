@@ -8,7 +8,7 @@ const verifyCallback =
   (req, resolve, reject, requiredRights) => async (err, user, info) => {
     if (isPublicRoute(req.url) || user.role === "superAdmin") {
       req.user = user;
-      resolve();
+      return resolve();
     }
     if (err || info || !user) {
       return reject(
