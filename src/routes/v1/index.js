@@ -3,6 +3,8 @@ const authRoute = require("./auth.route");
 const userRoute = require("./user.route");
 const eventRoute = require("./event.route");
 const ticketRoute = require("./tickets.route");
+const paymentRoute = require("./payment.route");
+
 const router = express.Router();
 
 const defaultRoutes = [
@@ -21,6 +23,10 @@ const defaultRoutes = [
   {
     path: "/tickets",
     route: ticketRoute,
+  },
+  {
+    path: "/payment",
+    route: paymentRoute,
   },
 ];
 

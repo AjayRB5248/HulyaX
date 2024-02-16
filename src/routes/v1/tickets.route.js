@@ -17,7 +17,23 @@ router.post(
 router.post(
   "/purchase-ticket",
   auth("purchaseTicket"),
+  validate(ticketValidation.purchaseTicket),
   ticketController.purchaseTicket
 );
+
+router.post(
+  "/validate-ticket",
+  auth("validateTicket"),
+  validate(ticketValidation.validateTicket),
+  ticketController.validateTicket
+);
+
+router.post(
+  "/show-purchased-ticket",
+  auth("purchaseTicket"),
+  ticketController.showPurchasedTicket
+);
+
+
 
 module.exports = router;

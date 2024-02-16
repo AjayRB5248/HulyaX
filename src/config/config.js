@@ -73,5 +73,12 @@ module.exports = {
     secretAccessKey:envVars.AWS_SECRET_ACCESS_KEY,
     region:envVars.AWS_REGION,
     AWS_S3_BUCKET_NAME:envVars.AWS_S3_BUCKET_NAME
+  },
+  paymentProcessor :{
+    stripe_secret : envVars.STRIPE_SECRET_KEY,
+    stripe_webhook_secret : envVars.STRIPE_WEBHOOK_SECRET,
+    appName : envVars.APP_NAME,
+    SUCCESS_URL : envVars.SUCCESS_URL_STRIPE,
+    FAILED_URL : envVars.FAILED_URL_STRIPE
   }
 };
