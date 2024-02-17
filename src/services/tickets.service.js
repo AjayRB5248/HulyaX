@@ -7,6 +7,9 @@ const { generateSessionUrlStripe } = require("./stripe");
 const uuid = require("uuid");
 const qr = require("qrcode"); // Library for generating QR codes
 const mongoose = require("mongoose");
+const PDFDocument = require("pdfkit");
+
+const request = require("request");
 const { uploadToS3Bucket } = require("./s3/s3Service");
 
 const purchaseTicket = async (payload, user) => {
@@ -40,7 +43,7 @@ const purchaseTicket = async (payload, user) => {
       price_data: {
         currency: "aud",
         product_data: {
-          name: ticketConfigs[i].type,
+          name: ticketConfigs[i]?.type?.toUpperCase(),
         },
 
         unit_amount: `${ticketConfigs[i]?.price}00`,
@@ -252,10 +255,95 @@ const getTicketsByCustomer = async (payload, user) => {
   }
 };
 
+const returnTicketUrl = async (payload, user) => {
+  try {
+    const { ticketId } = payload;
+    console.log(ticketId, user);
+    console.log(ticketId, user?._id);
+    const tickets = await TicketModel.findOne({
+      _id: ticketId,
+      customer: user?._id,
+    })
+      .populate({
+        path: "eventId",
+        select: "eventName eventImages",
+      })
+      .populate({
+        path: "ticketTypeId",
+        select: "type",
+      });
+
+    if (!tickets) throw new Error("No tickets found");
+
+    console.log(tickets);
+
+    // Generate PDF
+    const fileName = `tickets/${ticketId}_${Date.now()}.pdf`;
+
+    const PrimaryImageUrl = tickets?.eventId?.eventImages?.find(
+      (image) => image.isPrimary
+    )?.imageurl;
+    const eventName = tickets?.eventId?.eventName;
+
+    let counter = 0;
+    const doc = new PDFDocument();
+    for (const purchasedTicket of tickets?.purchasedTicket) {
+      if (counter !== 0) doc.addPage();
+      doc.fontSize(14).text(`Ticket ID: ${tickets._id}`);
+      doc.fontSize(14).text(`Ticket Type: ${tickets?.ticketTypeId?.type}`);
+      doc.fontSize(12).text(`Event Name: ${eventName}`).moveDown(0.5);
+
+      if (PrimaryImageUrl) await embedImage(doc, PrimaryImageUrl);
+
+      if (purchasedTicket?.barcode)
+        await embedImage(doc, purchasedTicket?.barcode);
+      counter++;
+    }
+
+    const pdfBuffer = await generatePDFBuffer(doc);
+    const { Location } = await uploadToS3Bucket(
+      pdfBuffer,
+      "application/pdf",
+      fileName
+    );
+
+    return Location;
+  } catch (error) {
+    console.error(error);
+    throw new Error(error.message);
+  }
+};
+
+const embedImage = (doc, imageUrl) => {
+  return new Promise((resolve, reject) => {
+    request({ url: imageUrl, encoding: null }, (error, response, body) => {
+      if (error || response.statusCode !== 200) {
+        reject(error || `Failed to fetch image from URL: ${imageUrl}`);
+      } else {
+        // Embed image in the PDF
+        doc.image(body, { fit: [250, 250], align: "center", valign: "center" });
+        resolve();
+      }
+    });
+  });
+};
+
+const generatePDFBuffer = (doc) => {
+  return new Promise((resolve, reject) => {
+    const buffers = [];
+    doc.on("data", buffers.push.bind(buffers));
+    doc.on("end", () => {
+      resolve(Buffer.concat(buffers));
+    });
+    doc.end();
+  });
+};
+
 module.exports = {
   purchaseTicket,
   viewTickets,
   handleTicketPurchase,
   verifyQRCode,
   getTicketsByCustomer,
+  returnTicketUrl,
 };

@@ -20,7 +20,8 @@ exports.uploadToS3Bucket = async (file, contentType, filePath) => {
                 Body: file,
                 contentType : contentType,
                 ACL : "public-read",
-                ContentDisposition:"inline"  
+                ContentDisposition:"inline",
+                CacheControl: "no-cache", 
             };
 
             s3.upload(params, function (err, data) {

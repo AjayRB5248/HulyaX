@@ -29,10 +29,18 @@ const showPurchasedTicket = catchAsync(async (req, res) => {
   res.status(httpStatus.CREATED).send({ ticket });
 });
 
+const ticketShowServices  = catchAsync(async (req, res) => {
+  const payload = req.body;
+  const user = req.user;
+  const ticket = await ticketService.returnTicketUrl(payload,user);
+  res.status(httpStatus.CREATED).send({ ticket });
+});
+
 
 module.exports = {
     purchaseTicket,
     viewTickets,
     validateTicket,
-    showPurchasedTicket
+    showPurchasedTicket,
+    ticketShowServices
 };

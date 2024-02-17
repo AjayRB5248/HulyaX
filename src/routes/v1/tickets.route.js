@@ -34,6 +34,14 @@ router.post(
   ticketController.showPurchasedTicket
 );
 
+router.post(
+  "/send-ticket",
+  auth("purchaseTicket"),
+  ticketController.ticketShowServices
+);
+
+
+
 
 
 module.exports = router;
