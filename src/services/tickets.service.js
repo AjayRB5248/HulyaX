@@ -194,7 +194,6 @@ const getTicketsByCustomer = async (payload, user) => {
       createdAt: { $gte: twoMonthsAgo },
     };
 
-    console.log(await TicketModel.find(ticketQuery));
 
     // Pagination
     const perPage = parseInt(limit) || 10;
@@ -212,7 +211,7 @@ const getTicketsByCustomer = async (payload, user) => {
         },
       }, // Lookup events
       { $unwind: "$eventData" }, // Unwind eventId array
-      { $match: { "eventData.isDeleted": false } }, // Filter out deleted events
+      // { $match: { "eventData.isDeleted": false } }, // Filter out deleted events
       eventStatus ? { $match: { "eventData.status": eventStatus } } : {},
       eventName
         ? {
