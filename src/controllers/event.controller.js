@@ -74,6 +74,16 @@ const getEventStatuses = catchAsync(async (req, res) => {
   res.status(httpStatus.CREATED).send({ eventStatuses });
 });
 
+const getPossibleEventVenues = catchAsync(async (req, res) => {
+  const eventVenues = await eventService.listVenues(req.query, req.user);
+  res.status(httpStatus.CREATED).send({ eventVenues });
+});
+
+const getPossibleEventArtists = catchAsync(async (req, res) => {
+  const eventArtists = await eventService.listArtists(req.query, req.user);
+  res.status(httpStatus.CREATED).send({ eventArtists });
+});
+
 module.exports = {
   addEvent,
   setupEventTickets,
@@ -82,5 +92,7 @@ module.exports = {
   getEvents,
   addItemsToEvent,
   removeItemsFromEvent,
-  getEventStatuses
+  getEventStatuses,
+  getPossibleEventVenues,
+  getPossibleEventArtists
 };

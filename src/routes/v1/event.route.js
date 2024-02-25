@@ -1,5 +1,5 @@
 const express = require("express");
-const {auth} = require("../../middlewares/auth");
+const { auth } = require("../../middlewares/auth");
 const validate = require("../../middlewares/validate");
 const eventController = require("../../controllers/event.controller");
 const eventValidation = require("../../validations/event.validation");
@@ -26,18 +26,20 @@ router
     eventController.setupEventTickets
   );
 
+// this is public route
 router.route("/fetch-events").get(
-  // auth(),
-  // validate(eventValidation.setupEventTickets),
+  auth(),
   eventController.listEvents
 );
 
-router.route('/edit/:eventId').put(
-  auth(PERMISSION_CONSTANTS.EDIT_EVENTS),
-  validateEventImagesMiddleware("posterImage", "images"),
-  validate(eventValidation.editEvent),
-  eventController.editEvents
-)
+router
+  .route("/edit/:eventId")
+  .put(
+    auth(PERMISSION_CONSTANTS.EDIT_EVENTS),
+    validateEventImagesMiddleware("posterImage", "images"),
+    validate(eventValidation.editEvent),
+    eventController.editEvents
+  );
 
 router.route("/edit/add-event-items/:eventId").post(
   auth(PERMISSION_CONSTANTS.EDIT_EVENTS),
@@ -54,14 +56,33 @@ router
     eventController.removeItemsFromEvent
   );
 
-router.route('/:eventId').get(
-  auth(PERMISSION_CONSTANTS.LIST_EVENTS),
-  validate(eventValidation.getSingleEvents),
-  eventController.getEvents
-)
+router
+  .route("/:eventId")
+  .get(
+    auth(PERMISSION_CONSTANTS.LIST_EVENTS),
+    validate(eventValidation.getSingleEvents),
+    eventController.getEvents
+  );
 
-router.route('/event-status-list').get(
+router.route("/event-status-list").get(
   // auth(PERMISSION_CONSTANTS.LIST_EVENTS),
   eventController.getEventStatuses
-)
+);
+
+// get possible event venues
+router
+  .route("/event-venues-list")
+  .get(
+    auth(PERMISSION_CONSTANTS.ADD_EVENTS), 
+    eventController.getPossibleEventVenues
+  );
+
+// get possible event artists
+router
+  .route("/event-venues-list")
+  .get(
+    auth(PERMISSION_CONSTANTS.ADD_EVENTS),
+    eventController.getPossibleEventArtists
+  );
+
 module.exports = router;

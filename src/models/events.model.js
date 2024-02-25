@@ -4,40 +4,6 @@ const Schema = mongoose.Schema;
 const slugify = require("slugify");
 const { EVENT_STATUS } = require("../utility/constants");
 
-const artistSchema = {
-  artistName: {
-    type: String,
-    required: true,
-  },
-  genre: {
-    type: String,
-  },
-  category: {
-    type: String,
-  },
-  // Add other artist details if needed
-};
-
-const venueSchema = {
-  venueName: {
-    type: String,
-    required: true,
-  },
-  eventDate: {
-    type: Date,
-    required: true,
-  },
-  city: {
-    type: String,
-    required: true,
-  },
-  timeZone: {
-    type: String,
-    required: true,
-  },
-  // Add other venue details if needed
-};
-
 const eventImageSchema = {
   imageurl: {
     type: String,
@@ -45,6 +11,17 @@ const eventImageSchema = {
   isPrimary: {
     type: Boolean,
     default: false,
+  },
+};
+
+const venueShema = {
+  _id: {
+    type: mongoose.Types.ObjectId,
+    ref: "Venue",
+  },
+  eventDate: {
+    type: Date,
+    required: true,
   },
 };
 
@@ -56,8 +33,8 @@ const eventSchema = mongoose.Schema(
       enum: Object.values(EVENT_STATUS),
       index: true,
     },
-    secondaryStatus : {
-      type : [String], // secondary status may be : TRENDING, SPECIAL, LIMITED
+    secondaryStatus: {
+      type: [String], // secondary status may be : TRENDING, SPECIAL, LIMITED
       index: true,
     },
     eventDescription: {
@@ -77,8 +54,13 @@ const eventSchema = mongoose.Schema(
       ref: "User",
       index: true,
     },
-    artists: [artistSchema],
-    venues: [venueSchema],
+    artists: [
+      {
+        type: mongoose.Types.ObjectId,
+        ref: "Artist",
+      },
+    ],
+    venues: [venueShema],
     slug: {
       type: String,
       // required: true,
