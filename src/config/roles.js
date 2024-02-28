@@ -1,6 +1,6 @@
 // TODO: add these roles at db level and configurable by superadmin ( superadmin should be able to modify access)
 const allRoles = {
-  superAdmin: ["manageUsers", "listEvents", "editEvent", "purchaseTicket","deleteEvent","validateTicket"],
+  superAdmin: ["manageUsers", "listEvents", "editEvent", "purchaseTicket","deleteEvent"],
   companyAdmin: [
     "addNewEvent",
     "manageUsers",
