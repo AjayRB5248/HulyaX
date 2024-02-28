@@ -21,11 +21,20 @@ if (config.env !== 'test') {
   app.use(morgan.errorHandler);
 }
 
+// Custom middleware to preserve raw body for webhooks
+const rawBodySaver = (req, res, buf, encoding) => {
+  if (buf && buf.length) {
+    req.rawBody = buf.toString(encoding || 'utf8');
+  }
+};
+
+
 // set security HTTP headers
 app.use(helmet());
 
 // parse json request body
-app.use(express.json());
+app.use(express.json({ verify: rawBodySaver }));
+
 
 // parse urlencoded request body
 app.use(express.urlencoded({ extended: true }));

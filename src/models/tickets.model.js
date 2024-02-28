@@ -19,19 +19,39 @@ const Ticket = mongoose.Schema(
     eventId: {
       type: Schema.Types.ObjectId,
       ref: "Events",
+      index: true
     },
     customer: {
       type: Schema.Types.ObjectId,
       ref: "User",
+      index : true
     },
     confirmationCode: {
       type: Schema.Types.Number, // or could be qr or uuid
     },
+    purchasedTicket: [
+      {
+        uniqueId: {
+          type: String,
+          required : true
+        },
+        barcode: {
+          type: String,
+          required : true
+        },
+        isVerified : {
+          type : Boolean,
+          default : false
+        }
+      },
+    ],
   },
   {
     timestamps: true,
   }
 );
+
+Ticket.index({ 'purchasedTicket.uniqueId': 1, 'purchasedTicket.barcode': 1 });
 
 const TicketModel = mongoose.model("Ticket", Ticket);
 

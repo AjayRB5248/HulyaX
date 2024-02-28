@@ -16,7 +16,31 @@ const viewTickets = catchAsync(async (req, res) => {
   res.status(httpStatus.CREATED).send({ ticket });
 });
 
+const validateTicket = catchAsync(async (req, res) => {
+  const payload = req.body;
+  const ticket = await ticketService.verifyQRCode(payload);
+  res.status(httpStatus.CREATED).send({ ticket });
+});
+
+const showPurchasedTicket = catchAsync(async (req, res) => {
+  const payload = req.body;
+  const user = req.user;
+  const ticket = await ticketService.getTicketsByCustomer(payload,user);
+  res.status(httpStatus.CREATED).send({ ticket });
+});
+
+const ticketShowServices  = catchAsync(async (req, res) => {
+  const payload = req.body;
+  const user = req.user;
+  const ticket = await ticketService.returnTicketUrl(payload,user);
+  res.status(httpStatus.CREATED).send({ ticket });
+});
+
+
 module.exports = {
     purchaseTicket,
-    viewTickets
+    viewTickets,
+    validateTicket,
+    showPurchasedTicket,
+    ticketShowServices
 };
