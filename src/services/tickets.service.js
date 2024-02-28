@@ -98,7 +98,7 @@ const handleTicketPurchase = async (ticketPayload) => {
         (p) => p.ticketId + "" === currentTicket?._id + ""
       );
       for (let p = 0; p < currentPayload?.quantity; p++) {
-        const barcodeText = `${currentTicket?.type}_${generateTicketId()}`;
+        const barcodeText = `${currentTicket?.type}_${generateTicketId()}/${currentTicket?.eventId}`;
         const barcode = await generateQRCode(barcodeText);
         const buffer = Buffer.from(
           barcode.replace(/^data:image\/\w+;base64,/, ""),
@@ -150,7 +150,8 @@ const generateQRCode = async (text) => {
 
 const verifyQRCode = async (payloadData) => {
   try {
-    const { eventId, ticketId } = payloadData ?? {};
+    const { uniqueKey } = payloadData ?? {};
+    const [ticketId,eventId] = uniqueKey.split("/");
     const currentTicket = await TicketModel.findOne({
       eventId,
       purchasedTicket: { $elemMatch: { uniqueId: ticketId } },

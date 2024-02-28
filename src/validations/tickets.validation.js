@@ -24,8 +24,7 @@ const purchaseTicket = {
 
 const validateTicket = {
   body: Joi.object().keys({
-    eventId: Joi.string().required(),
-    ticketId: Joi.string().required()
+    uniqueKey: Joi.string().required()
   }),
 };
 
