@@ -23,7 +23,7 @@ router.post(
 
 router.post(
   "/validate-ticket",
-  auth("validateTicket"),
+  // auth("validateTicket"),
   validate(ticketValidation.validateTicket),
   ticketController.validateTicket
 );
