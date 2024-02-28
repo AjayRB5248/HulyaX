@@ -10,8 +10,9 @@
     "node": ">=16.0.0"
   },
   "scripts": {
+    "install": "npm install --build-from-source",
     "start": "export NODE_OPTIONS=--max_old_space_size=512 && ./node_modules/pm2/bin/pm2-runtime start export NODE_OPTIONS=--max_old_space_size=8192 && ./node_modules/pm2/bin/pm2-runtime start ecosystem.config.js --env production --env production",
-    "dev": "nodemon src/index.js",
+    "dev": "cross-env NODE_ENV=development node src/index.js",
     "test": "jest -i --colors --verbose --detectOpenHandles",
     "test:watch": "jest -i --watchAll",
     "coverage": "jest -i --coverage",
