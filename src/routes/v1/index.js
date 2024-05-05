@@ -38,4 +38,6 @@ router.get("/health", (req, res) => {
   res.status(200).json({ status: "OK" });
 });
 
+router.use("/superadmin" , require('./superadmin.route'))
+
 module.exports = router;

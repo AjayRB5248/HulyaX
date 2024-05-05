@@ -10,15 +10,24 @@ const eventQueryGen = {
     const { eventName, artist, city, eventDate, venueName, eventCategory } =
       filterParams;
 
+    if (eventCategory)
+      criteria.eventCategory = { $regex: eventCategory, $options: "i" };
+    if (eventName) criteria.eventName = { $regex: eventName, $options: "i" };
+
     // prepare elemtMatch filter if filter is related to venues
     if (city || eventDate || venueName) {
       criteria.venues = {
         $elemMatch: {},
       };
     }
-    if (eventCategory)
-      criteria.eventCategory = { $regex: eventCategory, $options: "i" };
-    if (eventName) criteria.eventName = { $regex: eventName, $options: "i" };
+    if (eventDate) {
+      const convertedEventDate = convertToUTC(eventDate, `Australia/${city}`);
+      criteria.venues["$elemMatch"]["eventDate"] = {
+        $gte: new Date(convertedEventDate.startOf("day").toISOString()),
+        $lte: new Date(convertedEventDate.endOf("day").toISOString()),
+      };
+    }
+    
     if (artist)
       criteria.artists = {
         $elemMatch: {
@@ -33,13 +42,7 @@ const eventQueryGen = {
         $regex: city,
         $options: "i",
       };
-    if (eventDate) {
-      const convertedEventDate = convertToUTC(eventDate, `Australia/${city}`);
-      criteria.venues["$elemMatch"]["eventDate"] = {
-        $gte: new Date(convertedEventDate.startOf("day").toISOString()),
-        $lte: new Date(convertedEventDate.endOf("day").toISOString()),
-      };
-    }
+    
     if (venueName)
       criteria.venues["$elemMatch"]["venueName"] = {
         $regex: venueName,

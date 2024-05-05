@@ -1,8 +1,9 @@
 const express = require("express");
 const validate = require("../../middlewares/validate");
-const auth = require("../../middlewares/auth");
+const { auth } = require("../../middlewares/auth");
 const ticketController = require("../../controllers/tickets.controller");
 const ticketValidation = require("../../validations/tickets.validation");
+const { PERMISSION_CONSTANTS } = require("../../utility/constants");
 
 const router = express.Router();
 
@@ -16,7 +17,7 @@ router.post(
 
 router.post(
   "/purchase-ticket",
-  auth("purchaseTicket"),
+  auth(PERMISSION_CONSTANTS.PURCHASE_TICKETS),
   validate(ticketValidation.purchaseTicket),
   ticketController.purchaseTicket
 );
@@ -30,13 +31,13 @@ router.post(
 
 router.post(
   "/show-purchased-ticket",
-  auth("purchaseTicket"),
+  auth(PERMISSION_CONSTANTS.PURCHASE_TICKETS),
   ticketController.showPurchasedTicket
 );
 
 router.post(
   "/send-ticket",
-  auth("purchaseTicket"),
+  auth(PERMISSION_CONSTANTS.PURCHASE_TICKETS),
   ticketController.ticketShowServices
 );
 

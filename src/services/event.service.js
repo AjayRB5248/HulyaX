@@ -3,6 +3,8 @@ const { Event } = require("../models");
 const ApiError = require("../utils/ApiError");
 const TicketConfigModel = require("../models/ticket-configs.model");
 const EventsModel = require("../models/events.model");
+const VenueModel = require("../models/venue.model");
+const ArtistModel = require("../models/artist.model");
 const moment = require("moment");
 const { convertToUTC, convertFromUTC } = require("./timeZoneConverter.service");
 const { eventQueryGen } = require("./queryGenerator.services");
@@ -20,23 +22,15 @@ const addEvent = async (payload, user) => {
     status,
     tags,
     eventCategory,
-    videoUrl
+    videoUrl,
   } = payload;
   const eventOwner = user._id;
 
-  const artistData = artists.map((artist) => {
-    return {
-      artistName: artist.name,
-      genre: artist.genre,
-      category: artist.category,
-    };
-  });
+  const artistData = artists.map((artistId) => artistId).filter(Boolean);
 
   const venueData = venues.map((venue) => {
     return {
-      venueName: venue.venueName,
-      city: venue.city,
-      timeZone: venue.timeZone,
+      _id: venue.venueId,
       eventDate: convertToUTC(venue.dateOfEvent, venue.timeZone),
     };
   });
@@ -62,7 +56,7 @@ const addEvent = async (payload, user) => {
     eventImages: eventImageDetails,
     tags,
     eventCategory,
-    videoUrl
+    videoUrl,
   });
   const saved = await eventToSave.save();
   const updatedEvent = await setupEventTickets(saved, ticketSettings);
@@ -70,12 +64,12 @@ const addEvent = async (payload, user) => {
 };
 
 const setupEventTickets = async (eventDoc, ticketSettings) => {
-  const { _id: eventId, eventOwner, venues } = eventDoc;
+  const { _id: eventId, eventOwner } = eventDoc;
 
   const ticketConfigToInsert = ticketSettings.map((tc) => {
     return {
       eventId,
-      venueId: venues.find((v) => v.venueName === tc.venueName),
+      venueId: tc.venueId,
       eventOwner,
       type: tc.type,
       price: tc.price,
@@ -92,31 +86,93 @@ const setupEventTickets = async (eventDoc, ticketSettings) => {
     { _id: eventId },
     { $set: { ticketTypes: insertedTicketSettingIds } },
     { new: true }
-  ).populate("ticketTypes");
-  return updatedEvent;
+  )
+    .populate("ticketTypes artists")
+    .populate({
+      path: "venues._id",
+      model: "Venue",
+    }).lean();
+
+  const eventVenues = updatedEvent.venues;
+  delete updatedEvent.venues;
+
+  const events = {
+    ...updatedEvent,
+    venues: eventVenues.map((v) => {
+      return {
+        ...v._id,
+      };
+    }),
+  };
+  return events;
 };
 
 const listEvents = async (filterParams, requestUser) => {
   let criteria = {};
 
-  if (requestUser.role === "customer") {
+  if (requestUser?.role === "customer") {
     criteria.isDeleted = { $ne: true };
   }
   // one admin should only be able to list their events - todo : put this condition elsewhere
-  if (requestUser.role === "companyAdmin") {
+  if (requestUser?.role === "companyAdmin") {
     criteria.eventOwner = requestUser._id;
   }
+
   if (filterParams) {
-    criteria = {
-      ...criteria,
-      ...eventQueryGen.listEventQueryGen(filterParams),
-    };
+    const { eventName, artist, city, eventDate, venueName, eventCategory } =
+      filterParams;
+    if (eventCategory)
+      criteria.eventCategory = { $regex: eventCategory, $options: "i" };
+    if (eventName) criteria.eventName = { $regex: eventName, $options: "i" };
+    if (eventDate) {
+      const convertedEventDate = convertToUTC(eventDate, `Australia/${city}`);
+      criteria.venues["$elemMatch"]["eventDate"] = {
+        $gte: new Date(convertedEventDate.startOf("day").toISOString()),
+        $lte: new Date(convertedEventDate.endOf("day").toISOString()),
+      };
+    }
+
+    if (city || venueName) {
+      const venueCriteria = {};
+      if(city) venueCriteria.city = { $regex: city, $options:"i" };
+      if(venueName) venueCriteria.venueName = { $regex: venueName, $options:"i" };
+      let venues = await VenueModel.find(venueCriteria).select('_id');
+      if(!venues?.length) throw new Error("EVENTS NOT FOUND");
+      venues = venues.map((v) => v._id);
+      criteria['venues._id'] = { $in : venues}
+    }
+
+    if(artist){
+      const artistCriteria = {};
+      if(artist) artistCriteria.artistName = { $regex: artist, $options:"i" };
+      let artistIds = await ArtistModel.find(artistCriteria).select('_id');
+      if(!artistIds?.length) throw new Error("EVENTS NOT FOUND");
+      artistIds = artistIds.map((a) => a._id);
+      criteria.artists = { $in : artistIds}
+    }
   }
 
-  const events = await EventsModel.find(criteria)
-    .populate("ticketTypes")
+  const dbEvent = await EventsModel.find(criteria)
+    .populate({
+        path: 'venues._id',
+        model: 'Venue',
+    })
+    .populate('artists ticketTypes')
     .lean();
 
+  const events = dbEvent.map((event) => {
+    const eventVenues = event.venues;
+    delete event.venues;
+    return {
+      ...event,
+      venues: eventVenues.map((v) => {
+        return {
+          ...v._id,
+        };
+      }),
+    };
+  });
+  
   let processedEvents = events
     .map((event) => {
       return {
@@ -167,10 +223,42 @@ const editEvent = async (payload, user) => {
     _id: payload.eventId,
     eventOwner: user._id,
   };
-  const foundEvent = await EventsModel.findOne(criteria)
-    .populate("ticketTypes")
+  if (user.role === "superAdmin") delete criteria.eventOwner;
+  const event = await EventsModel.findOne(criteria)
+    .populate("ticketTypes artists")
+    .populate({
+      path: "venues._id",
+      model: "Venue",
+    })
     .lean();
-  if (!foundEvent) throw new Error("Event not found");
+
+  const eventVenues = event.venues;
+  delete event.venues;
+
+  const events = {
+    ...updatedEvent,
+    venues: eventVenues.map((v) => {
+      return {
+        ...v._id,
+      };
+    }),
+  };
+  
+  if (!event) throw new Error("Event not found");
+
+  const foundEvent = event.map((event) => {
+    const eventVenues = event.venues;
+    delete event.venues;
+    return {
+      ...event,
+      venues: eventVenues.map((v) => {
+        return {
+          ...v._id,
+        };
+      }),
+    };
+  });
+
   const {
     eventName,
     eventDescription,
@@ -180,13 +268,15 @@ const editEvent = async (payload, user) => {
     venue,
     ticketType,
     eventImages,
-    videoUrl
+    videoUrl,
   } = payload;
   const updatePayload = {};
   if (eventName) updatePayload.eventName = eventName;
   if (eventDescription) updatePayload.eventDescription = eventDescription;
   if (videoUrl) updatePayload.videoUrl = videoUrl;
   if (status) updatePayload.status = status;
+
+  // can update posterImage from here
   if (
     Array.isArray(eventImages.primaryImages) &&
     eventImages.primaryImages.length
@@ -204,40 +294,40 @@ const editEvent = async (payload, user) => {
   const addToSet = {};
   if (Array.isArray(tags)) addToSet.tags = { $each: tags };
 
-  //edit artist details
-  if (artist?._id) {
-    let currentArtists = foundEvent.artists;
-    let artistToUpdate = currentArtists
-      .map((a) => {
-        if (a._id + "" === artist?._id + "") {
-          if (artist.artistName) a.artistName = artist.artistName;
-          if (artist.genre) a.genre = artist.genre;
-          if (artist.category) a.category = artist.category;
-        }
-        return a;
-      })
-      .filter(Boolean);
-    if (artistToUpdate.length) updatePayload.artists = artistToUpdate;
-  }
+  // edit artist details - artist can be update only via superadmin
+  // if (artist?._id) {
+  //   let currentArtists = foundEvent.artists;
+  //   let artistToUpdate = currentArtists
+  //     .map((a) => {
+  //       if (a._id + "" === artist?._id + "") {
+  //         if (artist.artistName) a.artistName = artist.artistName;
+  //         if (artist.genre) a.genre = artist.genre;
+  //         if (artist.category) a.category = artist.category;
+  //       }
+  //       return a;
+  //     })
+  //     .filter(Boolean);
+  //   if (artistToUpdate.length) updatePayload.artists = artistToUpdate;
+  // }
 
-  //edit venues details
-  if (venue?._id) {
-    if (!venue.timeZone) throw new Error("Timezone missing in payload");
-    let currentVenues = foundEvent.venues;
-    let venueToUpdate = currentVenues
-      .map((v) => {
-        if (v._id + "" === venue?._id + "") {
-          if (venue.venueName) v.venueName = venue.venueName;
-          if (venue.city) v.city = venue.city;
-          if (venue.timeZone) v.timeZone = venue.timeZone;
-          if (venue.dateOfEvent)
-            v.eventDate = convertToUTC(venue.dateOfEvent, venue.timeZone);
-        }
-        return v;
-      })
-      .filter(Boolean);
-    if (venueToUpdate.length) updatePayload.venues = venueToUpdate;
-  }
+  //edit venues details - artist can be update only via superadmin
+  // if (venue?._id) {
+  //   if (!venue.timeZone) throw new Error("Timezone missing in payload");
+  //   let currentVenues = foundEvent.venues;
+  //   let venueToUpdate = currentVenues
+  //     .map((v) => {
+  //       if (v._id + "" === venue?._id + "") {
+  //         if (venue.venueName) v.venueName = venue.venueName;
+  //         if (venue.city) v.city = venue.city;
+  //         if (venue.timeZone) v.timeZone = venue.timeZone;
+  //         if (venue.dateOfEvent)
+  //           v.eventDate = convertToUTC(venue.dateOfEvent, venue.timeZone);
+  //       }
+  //       return v;
+  //     })
+  //     .filter(Boolean);
+  //   if (venueToUpdate.length) updatePayload.venues = venueToUpdate;
+  // }
 
   // edit ticket settings
   if (ticketType?._id) {
@@ -269,19 +359,21 @@ const editEvent = async (payload, user) => {
     { $set: updatePayload, $addToSet: { ...addToSet } },
     { new: true }
   )
-    .populate("ticketTypes")
+    .populate("ticketTypes artists venues")
     .lean();
   return updatedEvent;
 };
 
 const deleteEvent = async (eventId, user) => {
   if (!eventId) throw new Error("EventId not found");
-  const critera = {
+  const criteria = {
     _id: eventId,
     eventOwner: user._id,
   };
-  if (user.role === "companyAdmin") delete critera.eventOwner; // todo: add common checker
-  const foundEvent = await EventsModel.findOne(critera);
+  if (user.role === "superAdmin") delete criteria.eventOwner;
+  const foundEvent = await EventsModel.findOneAndUpdate(criteria, {
+    $set: { isDeleted: false },
+  });
   if (!foundEvent) throw new Error("Event not found");
   const deletedEvent = await EventsModel.findOneAndUpdate(critera, { $set: { isDeleted: true } },{new: true}).lean();
   return deletedEvent;
@@ -289,7 +381,7 @@ const deleteEvent = async (eventId, user) => {
 
 const getEvent = async (eventId) => {
   const currentEvents = await EventsModel.findById(eventId)
-    .populate("ticketTypes")
+    .populate("ticketTypes artists venues")
     .lean();
   if (!currentEvents) throw new Error("Event not found");
   const venues = currentEvents.venues
@@ -309,9 +401,10 @@ const addItemsToEvent = async (payload, user) => {
     _id: payload.eventId,
     eventOwner: user._id,
   };
+  if (user.role === "superAdmin") delete criteria.eventOwner;
   const addToSetPayload = {};
   const foundEvent = await EventsModel.findOne(criteria)
-    .populate("ticketTypes")
+    .populate("ticketTypes artists venues")
     .lean();
   if (!foundEvent) throw new Error("Event not found");
   const { artist, venue, ticketType, eventImages } = payload;
@@ -377,7 +470,7 @@ const addItemsToEvent = async (payload, user) => {
     updatePayload,
     { new: true }
   )
-    .populate("ticketTypes")
+    .populate("ticketTypes artists venues")
     .lean();
   return updatedEvent;
 };
@@ -387,8 +480,9 @@ const removeItemsFromEvent = async (payload, user) => {
     _id: payload.eventId,
     eventOwner: user._id,
   };
+  if (user.role === "superAdmin") delete criteria.eventOwner;
   const foundEvent = await EventsModel.findOne(criteria)
-    .populate("ticketTypes")
+    .populate("ticketTypes artists venues")
     .lean();
   if (!foundEvent) throw new Error("Event not found");
   const { ticketTypeId, artistId, venueId, eventImageId } = payload;
@@ -421,9 +515,42 @@ const removeItemsFromEvent = async (payload, user) => {
     updatePayload,
     { new: true }
   )
-    .populate("ticketTypes")
+    .populate("ticketTypes artists venues")
     .lean();
   return updatedEvent;
+};
+
+const listVenues = async (filterQuery, user) => {
+  const criteria = {};
+  if (["customer", "companyAdmin"].includes(user.role)) {
+    criteria.isDeleted = { $ne: true };
+  }
+  if (filterQuery.venueName) {
+    criteria.venueName = { $regex: filterQuery.venueName, $options: "i" };
+  }
+  if (filterQuery.city) {
+    criteria.city = { $regex: filterQuery.city, $options: "i" };
+  }
+  const found = await VenueModel.find(criteria).lean();
+  return found;
+};
+
+const listArtists = async (filterQuery, user) => {
+  const criteria = {};
+  if (["customer", "companyAdmin"].includes(user.role)) {
+    criteria.isDeleted = { $ne: true };
+  }
+  if (filterQuery.artistName) {
+    criteria.artistName = { $regex: filterQuery.artistName, $options: "i" };
+  }
+  if (filterQuery.category) {
+    criteria.category = { $regex: filterQuery.category, $options: "i" };
+  }
+  if (filterQuery.status) {
+    criteria.status = { $in: [filterQuery.status] };
+  }
+  const found = await ArtistModel.find(criteria).lean();
+  return found;
 };
 
 module.exports = {
@@ -435,4 +562,6 @@ module.exports = {
   deleteEvent,
   addItemsToEvent,
   removeItemsFromEvent,
+  listVenues,
+  listArtists,
 };

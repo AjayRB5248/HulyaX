@@ -3,6 +3,7 @@ const validator = require("validator");
 const bcrypt = require("bcryptjs");
 const { toJSON, paginate } = require("./plugins");
 const { roles } = require("../config/roles");
+const { PERMISSION_CONSTANTS } = require("../utility/constants");
 
 const userSchema = mongoose.Schema(
   {
@@ -65,10 +66,15 @@ const userSchema = mongoose.Schema(
       },
     },
     company: { type: mongoose.Schema.Types.ObjectId, ref: "Company" }, // Reference to the associated company, but only for 'companyAdmin' role
-    isNumberVerified :{
-      type : Boolean, 
+    isNumberVerified: {
+      type: Boolean,
       default: false,
-    }
+    },
+    permissions: {
+      type: [String],
+      default: [PERMISSION_CONSTANTS.PURCHASE_TICKETS],
+      enum: Object.values(PERMISSION_CONSTANTS),
+    },
   },
   {
     timestamps: true,
@@ -116,8 +122,6 @@ userSchema.pre("save", async function (next) {
   if (user.isModified("password")) {
     user.password = await bcrypt.hash(user.password, 8);
   }
-
-  
 
   next();
 });

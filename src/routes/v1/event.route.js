@@ -1,5 +1,5 @@
 const express = require("express");
-const auth = require("../../middlewares/auth");
+const { auth } = require("../../middlewares/auth");
 const validate = require("../../middlewares/validate");
 const eventController = require("../../controllers/event.controller");
 const eventValidation = require("../../validations/event.validation");
@@ -8,11 +8,12 @@ const {
   validateEventImagesMiddleware,
 } = require("../../services/s3/s3Middleware");
 const { multerParser } = require("../../middlewares/multer");
+const { PERMISSION_CONSTANTS } = require("../../utility/constants");
 
 router
   .route("/add-new-event")
   .post(
-    auth("addNewEvent"),
+    auth(PERMISSION_CONSTANTS.ADD_EVENTS),
     validateEventImagesMiddleware("posterImage", "images"),
     eventController.addEvent
   );
@@ -20,26 +21,28 @@ router
 router
   .route("/setup-event-tickets")
   .post(
-    auth("setupTickets"),
+    auth(PERMISSION_CONSTANTS.SETUP_TICKETS),
     validate(eventValidation.setupEventTickets),
     eventController.setupEventTickets
   );
 
+// this is public route
 router.route("/fetch-events").get(
   auth(),
-  // validate(eventValidation.setupEventTickets),
   eventController.listEvents
 );
 
-router.route('/edit/:eventId').put(
-  auth("editEvent"),
-  validateEventImagesMiddleware("posterImage", "images"),
-  validate(eventValidation.editEvent),
-  eventController.editEvents
-)
+router
+  .route("/edit/:eventId")
+  .put(
+    auth(PERMISSION_CONSTANTS.EDIT_EVENTS),
+    validateEventImagesMiddleware("posterImage", "images"),
+    validate(eventValidation.editEvent),
+    eventController.editEvents
+  );
 
 router.route("/edit/add-event-items/:eventId").post(
-  auth("editEvent"),
+  auth(PERMISSION_CONSTANTS.EDIT_EVENTS),
   validateEventImagesMiddleware("images"), // can add secondary images from here
   // validate(eventValidation.editEvent),
   eventController.addItemsToEvent
@@ -48,16 +51,39 @@ router.route("/edit/add-event-items/:eventId").post(
 router
   .route("/edit/remove-event-items/:eventId")
   .delete(
-    auth("editEvent"),
+    auth(PERMISSION_CONSTANTS.EDIT_EVENTS),
     multerParser,
     eventController.removeItemsFromEvent
   );
 
-router.route('/:eventId').get(
-  auth("listEvents"),
-  validate(eventValidation.getSingleEvents),
-  eventController.getEvents
-)
+router
+  .route("/:eventId")
+  .get(
+    auth(PERMISSION_CONSTANTS.LIST_EVENTS),
+    validate(eventValidation.getSingleEvents),
+    eventController.getEvents
+  );
+
+router.route("/event-status-list").get(
+  // auth(PERMISSION_CONSTANTS.LIST_EVENTS),
+  eventController.getEventStatuses
+);
+
+// get possible event venues
+router
+  .route("/event-venues-list")
+  .get(
+    auth(PERMISSION_CONSTANTS.ADD_EVENTS), 
+    eventController.getPossibleEventVenues
+  );
+
+// get possible event artists
+router
+  .route("/event-venues-list")
+  .get(
+    auth(PERMISSION_CONSTANTS.ADD_EVENTS),
+    eventController.getPossibleEventArtists
+  );
 
 router.route('/:eventId').delete(
   auth("deleteEvent"),
