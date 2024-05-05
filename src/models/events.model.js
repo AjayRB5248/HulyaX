@@ -2,40 +2,7 @@ const mongoose = require("mongoose");
 const { toJSON } = require("./plugins");
 const Schema = mongoose.Schema;
 const slugify = require("slugify");
-
-const artistSchema = {
-  artistName: {
-    type: String,
-    required: true,
-  },
-  genre: {
-    type: String,
-  },
-  category: {
-    type: String,
-  },
-  // Add other artist details if needed
-};
-
-const venueSchema = {
-  venueName: {
-    type: String,
-    required: true,
-  },
-  eventDate: {
-    type: Date,
-    required: true,
-  },
-  city: {
-    type: String,
-    required: true,
-  },
-  timeZone: {
-    type: String,
-    required: true,
-  },
-  // Add other venue details if needed
-};
+const { EVENT_STATUS } = require("../utility/constants");
 
 const eventImageSchema = {
   imageurl: {
@@ -47,12 +14,27 @@ const eventImageSchema = {
   },
 };
 
+const venueShema = {
+  _id: {
+    type: mongoose.Types.ObjectId,
+    ref: "Venue",
+  },
+  eventDate: {
+    type: Date,
+    required: true,
+  },
+};
+
 const eventSchema = mongoose.Schema(
   {
     status: {
       type: String,
-      default: "PLANNED",
-      enum: ["ONGOING", "PLANNED", "COMPLETED", "CANCELLED"],
+      default: EVENT_STATUS.PLANNED,
+      enum: Object.values(EVENT_STATUS),
+      index: true,
+    },
+    secondaryStatus: {
+      type: [String], // secondary status may be : TRENDING, SPECIAL, LIMITED
       index: true,
     },
     eventDescription: {
@@ -72,8 +54,13 @@ const eventSchema = mongoose.Schema(
       ref: "User",
       index: true,
     },
-    artists: [artistSchema],
-    venues: [venueSchema],
+    artists: [
+      {
+        type: mongoose.Types.ObjectId,
+        ref: "Artist",
+      },
+    ],
+    venues: [venueShema],
     slug: {
       type: String,
       // required: true,

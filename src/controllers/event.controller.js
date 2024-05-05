@@ -1,6 +1,7 @@
 const httpStatus = require("http-status");
 const catchAsync = require("../utils/catchAsync");
 const eventService = require("../services/event.service");
+const { EVENT_STATUS } = require("../utility/constants");
 
 const addEvent = catchAsync(async (req, res) => {
   const payload = req.body;
@@ -68,6 +69,21 @@ const getEvents = catchAsync(async (req, res) => {
   res.status(httpStatus.CREATED).send({ event });
 });
 
+const getEventStatuses = catchAsync(async (req, res) => {
+  const eventStatuses = Object.values(EVENT_STATUS)
+  res.status(httpStatus.CREATED).send({ eventStatuses });
+});
+
+const getPossibleEventVenues = catchAsync(async (req, res) => {
+  const eventVenues = await eventService.listVenues(req.query, req.user);
+  res.status(httpStatus.CREATED).send({ eventVenues });
+});
+
+const getPossibleEventArtists = catchAsync(async (req, res) => {
+  const eventArtists = await eventService.listArtists(req.query, req.user);
+  res.status(httpStatus.CREATED).send({ eventArtists });
+});
+
 module.exports = {
   addEvent,
   setupEventTickets,
@@ -76,5 +92,8 @@ module.exports = {
   getEvents,
   addItemsToEvent,
   removeItemsFromEvent,
-  deleteEvent
+  deleteEvent,
+  getEventStatuses,
+  getPossibleEventVenues,
+  getPossibleEventArtists
 };
