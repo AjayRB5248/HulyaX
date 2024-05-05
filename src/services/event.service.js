@@ -86,8 +86,25 @@ const setupEventTickets = async (eventDoc, ticketSettings) => {
     { _id: eventId },
     { $set: { ticketTypes: insertedTicketSettingIds } },
     { new: true }
-  ).populate("ticketTypes artists venues");
-  return updatedEvent;
+  )
+    .populate("ticketTypes artists")
+    .populate({
+      path: "venues._id",
+      model: "Venue",
+    }).lean();
+
+  const eventVenues = updatedEvent.venues;
+  delete updatedEvent.venues;
+
+  const events = {
+    ...updatedEvent,
+    venues: eventVenues.map((v) => {
+      return {
+        ...v._id,
+      };
+    }),
+  };
+  return events;
 };
 
 const listEvents = async (filterParams, requestUser) => {
@@ -207,10 +224,41 @@ const editEvent = async (payload, user) => {
     eventOwner: user._id,
   };
   if (user.role === "superAdmin") delete criteria.eventOwner;
-  const foundEvent = await EventsModel.findOne(criteria)
-    .populate("ticketTypes artists venues")
+  const event = await EventsModel.findOne(criteria)
+    .populate("ticketTypes artists")
+    .populate({
+      path: "venues._id",
+      model: "Venue",
+    })
     .lean();
-  if (!foundEvent) throw new Error("Event not found");
+
+  const eventVenues = event.venues;
+  delete event.venues;
+
+  const events = {
+    ...updatedEvent,
+    venues: eventVenues.map((v) => {
+      return {
+        ...v._id,
+      };
+    }),
+  };
+  
+  if (!event) throw new Error("Event not found");
+
+  const foundEvent = event.map((event) => {
+    const eventVenues = event.venues;
+    delete event.venues;
+    return {
+      ...event,
+      venues: eventVenues.map((v) => {
+        return {
+          ...v._id,
+        };
+      }),
+    };
+  });
+
   const {
     eventName,
     eventDescription,
@@ -227,6 +275,8 @@ const editEvent = async (payload, user) => {
   if (eventDescription) updatePayload.eventDescription = eventDescription;
   if (videoUrl) updatePayload.videoUrl = videoUrl;
   if (status) updatePayload.status = status;
+
+  // can update posterImage from here
   if (
     Array.isArray(eventImages.primaryImages) &&
     eventImages.primaryImages.length
@@ -244,40 +294,40 @@ const editEvent = async (payload, user) => {
   const addToSet = {};
   if (Array.isArray(tags)) addToSet.tags = { $each: tags };
 
-  //edit artist details
-  if (artist?._id) {
-    let currentArtists = foundEvent.artists;
-    let artistToUpdate = currentArtists
-      .map((a) => {
-        if (a._id + "" === artist?._id + "") {
-          if (artist.artistName) a.artistName = artist.artistName;
-          if (artist.genre) a.genre = artist.genre;
-          if (artist.category) a.category = artist.category;
-        }
-        return a;
-      })
-      .filter(Boolean);
-    if (artistToUpdate.length) updatePayload.artists = artistToUpdate;
-  }
+  // edit artist details - artist can be update only via superadmin
+  // if (artist?._id) {
+  //   let currentArtists = foundEvent.artists;
+  //   let artistToUpdate = currentArtists
+  //     .map((a) => {
+  //       if (a._id + "" === artist?._id + "") {
+  //         if (artist.artistName) a.artistName = artist.artistName;
+  //         if (artist.genre) a.genre = artist.genre;
+  //         if (artist.category) a.category = artist.category;
+  //       }
+  //       return a;
+  //     })
+  //     .filter(Boolean);
+  //   if (artistToUpdate.length) updatePayload.artists = artistToUpdate;
+  // }
 
-  //edit venues details
-  if (venue?._id) {
-    if (!venue.timeZone) throw new Error("Timezone missing in payload");
-    let currentVenues = foundEvent.venues;
-    let venueToUpdate = currentVenues
-      .map((v) => {
-        if (v._id + "" === venue?._id + "") {
-          if (venue.venueName) v.venueName = venue.venueName;
-          if (venue.city) v.city = venue.city;
-          if (venue.timeZone) v.timeZone = venue.timeZone;
-          if (venue.dateOfEvent)
-            v.eventDate = convertToUTC(venue.dateOfEvent, venue.timeZone);
-        }
-        return v;
-      })
-      .filter(Boolean);
-    if (venueToUpdate.length) updatePayload.venues = venueToUpdate;
-  }
+  //edit venues details - artist can be update only via superadmin
+  // if (venue?._id) {
+  //   if (!venue.timeZone) throw new Error("Timezone missing in payload");
+  //   let currentVenues = foundEvent.venues;
+  //   let venueToUpdate = currentVenues
+  //     .map((v) => {
+  //       if (v._id + "" === venue?._id + "") {
+  //         if (venue.venueName) v.venueName = venue.venueName;
+  //         if (venue.city) v.city = venue.city;
+  //         if (venue.timeZone) v.timeZone = venue.timeZone;
+  //         if (venue.dateOfEvent)
+  //           v.eventDate = convertToUTC(venue.dateOfEvent, venue.timeZone);
+  //       }
+  //       return v;
+  //     })
+  //     .filter(Boolean);
+  //   if (venueToUpdate.length) updatePayload.venues = venueToUpdate;
+  // }
 
   // edit ticket settings
   if (ticketType?._id) {
