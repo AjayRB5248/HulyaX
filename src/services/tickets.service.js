@@ -187,12 +187,13 @@ const verifyQRCode = async (payloadData) => {
 const getTicketsByCustomer = async (payload, user) => {
   try {
     const twoMonthsAgo = moment().subtract(2, "months").toDate();
-    const { eventName, eventStatus, limit, page } = payload || {}; // Extract filters from query params
+    const { eventName, eventStatus, limit, page , createdAt } = payload || {}; // Extract filters from query params
 
+    const dateFilter = createdAt ? moment(createdAt).toDate() : twoMonthsAgo;
     // Define query conditions for tickets
     const ticketQuery = {
       customer: mongoose.Types.ObjectId(user._id),
-      createdAt: { $gte: twoMonthsAgo },
+      createdAt: { $gte: dateFilter },
     };
 
 

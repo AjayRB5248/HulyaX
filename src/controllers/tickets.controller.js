@@ -26,7 +26,7 @@ const showPurchasedTicket = catchAsync(async (req, res) => {
   const payload = req.body;
   const user = req.user;
   const ticket = await ticketService.getTicketsByCustomer(payload,user);
-  res.status(httpStatus.CREATED).send({ ticket });
+  res.status(httpStatus.CREATED).send({ ticket : Array.isArray(ticket) ? ticket : [] ,count : ticket?.length || 0 });
 });
 
 const ticketShowServices  = catchAsync(async (req, res) => {
