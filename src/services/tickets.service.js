@@ -187,7 +187,7 @@ const verifyQRCode = async (payloadData) => {
 const getTicketsByCustomer = async (payload, user) => {
   try {
     const twoMonthsAgo = moment().subtract(2, "months").toDate();
-    const { eventName, eventStatus, createdAt, limit, page } = payload || {}; // Extract filters from query params
+    const { eventName, eventStatus, limit, page } = payload || {}; // Extract filters from query params
 
     // Define query conditions for tickets
     const ticketQuery = {
