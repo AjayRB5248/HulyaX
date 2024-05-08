@@ -120,7 +120,7 @@ const updateUserById = async (userId, updateBody) => {
   if (!user) {
     throw new ApiError(httpStatus.NOT_FOUND, "User not found");
   }
-
+  
   delete updateBody?.mobileNumber;
 
   if (updateBody.email && (await User.isEmailTaken(updateBody.email, userId))) {

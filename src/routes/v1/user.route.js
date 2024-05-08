@@ -41,7 +41,7 @@ router
 router
   .route("/profile-picture")
   .post(
-    auth(PERMISSION_CONSTANTS.PURCHASE_TICKETS),
+    auth(PERMISSION_CONSTANTS.MANAGE_USERS),
     getFileMiddleware("profile-picture"),
     userController.updateProfilePicture
   );
