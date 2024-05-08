@@ -47,7 +47,7 @@ const uploadS3Middleware = multer({
 // Custom middleware to directly return req.file
 const getFileMiddleware = (fieldName) => (req, res, next) => {
   uploadS3Middleware.single(fieldName)(req, res, (err) => {
-    if (err.message) {
+    if (err?.message) {
       return res.status(400).json({ message: err.message, err });
     }
 
