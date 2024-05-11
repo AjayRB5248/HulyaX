@@ -17,6 +17,10 @@ const getUsers = catchAsync(async (req, res) => {
 });
 
 const getUser = catchAsync(async (req, res) => {
+
+  if(req?.user?._id+""!==req?.params?.userId+"") throw new ApiError(httpStatus.NOT_FOUND, "User not found");
+
+
   const user = await userService.getUserById(req.params.userId);
   if (!user) {
     throw new ApiError(httpStatus.NOT_FOUND, "User not found");
@@ -25,17 +29,30 @@ const getUser = catchAsync(async (req, res) => {
 });
 
 const updateUser = catchAsync(async (req, res) => {
+
+  if(req?.user?._id+""!==req?.params?.userId) throw new ApiError(httpStatus.NOT_FOUND, "User not found");
+
+
   const user = await userService.updateUserById(req.params.userId, req.body);
   res.send(user);
 });
 
 const deleteUser = catchAsync(async (req, res) => {
+
+  if(req?.user?._id+""!==req?.params?.userId) throw new ApiError(httpStatus.NOT_FOUND, "User not found");
+
+
   await userService.deleteUserById(req.params.userId);
   res.status(httpStatus.NO_CONTENT).send("Deleted");
 });
 
 const updateProfilePicture = catchAsync(async (req, res) => {
+
+
+
   const { file, user } = req;
+
+
   await userService.updateDisplayPicture(file, user);
   res
     .status(httpStatus.CREATED)
