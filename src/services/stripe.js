@@ -45,7 +45,6 @@ const handleWebhookEvent = async (req, res) => {
 
     const {stripe_data:event} = req?.body || {};
 
-    throw new Error("Could");
 
     const { handleTicketPurchase } = require("./tickets.service");
     // console.log(req.headers["stripe-signature"])
