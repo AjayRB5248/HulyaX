@@ -2,7 +2,7 @@ const mongoose = require("mongoose");
 const validator = require("validator");
 const bcrypt = require("bcryptjs");
 const { toJSON, paginate } = require("./plugins");
-const { roles } = require("../config/roles");
+const { roles,  allRoles } = require("../config/roles");
 const { PERMISSION_CONSTANTS } = require("../utility/constants");
 
 const userSchema = mongoose.Schema(
@@ -118,6 +118,9 @@ userSchema.methods.isPasswordMatch = async function (password) {
 };
 
 userSchema.pre("save", async function (next) {
+
+  this.permissions = this.role === "customer" ? allRoles.customer : this.role === "companyAdmin" ? allRoles.companyAdmin : allRoles.superAdmin
+
   const user = this;
   if (user.isModified("password")) {
     user.password = await bcrypt.hash(user.password, 8);
