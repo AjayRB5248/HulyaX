@@ -86,7 +86,7 @@ router
   );
 
 router.route('/:eventId').delete(
-  auth("deleteEvent"),
+  auth(PERMISSION_CONSTANTS.EDIT_EVENTS),
   validate(eventValidation.getSingleEvents),
   eventController.deleteEvent
 )
