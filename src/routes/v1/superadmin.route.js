@@ -74,4 +74,20 @@ router
     superadminController.deleteArtist
   );
 
+router
+  .route("/states/add-states")
+  .post(
+    superAdminCheck,
+    multerParser,
+    validate(venueValidation.addStates),
+    superadminController.addStatesBySuperAdmin
+  );
+
+router
+  .route("/states/:stateId")
+  .put(superAdminCheck, superadminController.updateStatesBySuperAdmin);
+
+router
+  .route("/states/:stateId")
+  .delete(superAdminCheck, superadminController.deleteStatesBySuperAdmin);
 module.exports = router;

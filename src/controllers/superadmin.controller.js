@@ -6,6 +6,7 @@ const UserModel = require("../models/user.model");
 const EventModel = require("../models/events.model");
 const VenueModel = require("../models/venue.model");
 const ArtistModel = require("../models/artist.model");
+const StateModel = require("../models/states.model");
 
 const fetchPermissionList = catchAsync(async (req, res) => {
   res
@@ -54,6 +55,7 @@ const addVenueBySuperAdmin = catchAsync(async (req, res) => {
   const createdVenue = await VenueModel.insertMany(payload);
   return res.status(httpStatus.CREATED).send({ createdVenue });
 });
+
 
 const updateVenueBySuperAdmin = catchAsync(async (req, res) => {
   const venueId = req.params.venueId;
@@ -135,6 +137,46 @@ const deleteArtist = catchAsync(async (req, res) => {
   return res.status(httpStatus.CREATED).send({ deleted });
 });
 
+
+const addStatesBySuperAdmin = catchAsync(async (req, res) => {
+  const payload = req.body.venues || {};
+  const addedStates = await StateModel.insertMany(payload);
+  return res.status(httpStatus.CREATED).send({ addedStates });
+});
+
+const updateStatesBySuperAdmin = catchAsync(async (req, res) => {
+  const stateId = req.params.stateId;
+  if (!stateId)
+    return res
+      .status(httpStatus.INTERNAL_SERVER_ERROR)
+      .send("stateId is required");
+  const payload = req.body;
+  const found = await StateModel.findById(stateId);
+  if (!found) throw new Error("State not found");
+  const updated = await StateModel.findOneAndUpdate(
+    { _id: stateId },
+    { $set: payload },
+    { new: true }
+  ).lean();
+  return res.status(httpStatus.CREATED).send({ updated });
+});
+
+const deleteStatesBySuperAdmin = catchAsync(async (req, res) => {
+  const stateId = req.params.stateId;
+  if (!stateId)
+    return res
+      .status(httpStatus.INTERNAL_SERVER_ERROR)
+      .send("stateId is required");
+  const found = await StateModel.findById(stateId);
+  if (!found) throw new Error("State not found");
+  const deleted = await StateModel.findOneAndUpdate(
+    { _id: stateId },
+    { $set: { isDeleted: true } },
+    { new: true }
+  );
+  return res.status(httpStatus.CREATED).send({ deleted });
+});
+
 module.exports = {
   fetchPermissionList,
   updatePermission,
@@ -145,4 +187,7 @@ module.exports = {
   addArtist,
   updateArtist,
   deleteArtist,
+  addStatesBySuperAdmin,
+  updateStatesBySuperAdmin,
+  deleteStatesBySuperAdmin
 };

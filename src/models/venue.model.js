@@ -12,17 +12,14 @@ const venueSchema = mongoose.Schema(
       type: Boolean,
       default: false,
     },
-    city: {
-      type: String,
-      required: true,
-    },
-    timeZone: {
-      type: String,
-      required: true,
-    },
     capacity: {
       type: Number,
       required: false,
+    },
+    state: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "State",
+      required: true,
     },
   },
   {
