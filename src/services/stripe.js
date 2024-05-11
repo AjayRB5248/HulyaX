@@ -40,18 +40,23 @@ const generateSessionUrlStripe = async (products, user,tickets) => {
 };
 
 const handleWebhookEvent = async (req, res) => {
-    const { handleTicketPurchase } = require("./tickets.service");
-    console.log(req.headers["stripe-signature"])
-    const endpointSecret = config.paymentProcessor.stripe_webhook_secret;
-    const sig = req.headers['stripe-signature'];
-    let event;
 
-    try {
-      event = stripe.webhooks.constructEvent(req.rawBody, sig, endpointSecret);
-    } catch (err) {
-      console.error('Webhook Error:', err.message);
-      return res.status(400).send(`Webhook Error: ${err.message}`);
-    }
+    if(req.headers["x-api-key"]!==process.env.STRIPE_SECRET_KEY) return res.status(403).send();
+
+    const {stripe_data:event} = req?.body || {};
+
+    const { handleTicketPurchase } = require("./tickets.service");
+    // console.log(req.headers["stripe-signature"])
+    // const endpointSecret = config.paymentProcessor.stripe_webhook_secret;
+    // const sig = req.headers['stripe-signature'];
+    // let event;
+
+    // try {
+    //   event = stripe.webhooks.constructEvent(req.rawBody, sig, endpointSecret);
+    // } catch (err) {
+    //   console.error('Webhook Error:', err.message);
+    //   return res.status(400).send(`Webhook Error: ${err.message}`);
+    // }
 
 
     // Handle the event
