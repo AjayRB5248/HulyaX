@@ -6,6 +6,7 @@ const UserModel = require("../models/user.model");
 const EventModel = require("../models/events.model");
 const VenueModel = require("../models/venue.model");
 const ArtistModel = require("../models/artist.model");
+const superAdminServices = require("../services/superAdmin.services");
 const User = require("../models/user.model");
 
 const fetchPermissionList = catchAsync(async (req, res) => {
@@ -154,6 +155,12 @@ const approveCompany = catchAsync(async (req, res) => {
   }
 });
 
+const listCompany = catchAsync(async (req, res) => {
+  const payload = req.body;
+  const companies = await superAdminServices.listCompany(payload);
+  res.status(httpStatus.CREATED).send({ company : Array.isArray(companies) ? companies : [] ,count : companies?.length || 0 });
+});
+
 module.exports = {
   fetchPermissionList,
   updatePermission,
@@ -164,5 +171,6 @@ module.exports = {
   addArtist,
   updateArtist,
   deleteArtist,
-  approveCompany
+  approveCompany,
+  listCompany
 };

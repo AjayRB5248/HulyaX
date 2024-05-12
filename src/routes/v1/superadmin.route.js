@@ -10,7 +10,7 @@ const {
   validateEventImagesMiddleware,
 } = require("../../services/s3/s3Middleware");
 const { multerParser } = require("../../middlewares/multer");
-const { approveCompany } = require("../../validations/user.validation");
+const { approveCompany, listCompany } = require("../../validations/user.validation");
 
 router.route("/register").post(authController.register);
 
@@ -82,5 +82,14 @@ router
     validate(approveCompany),
     superadminController.approveCompany
   );
+
+  router
+  .route("/list-company")
+  .post(
+    superAdminCheck,
+    validate(listCompany),
+    superadminController.listCompany
+  );
+
 
 module.exports = router;
