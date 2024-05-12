@@ -178,6 +178,12 @@ const updatePassword = async (user, password, newPassword, confirmPassword) => {
     );
   }
 
+  if (user?.role === "superAdmin")
+    throw new ApiError(
+      httpStatus.NOT_ACCEPTABLE,
+      "GO AWAY BITCH !"
+    );
+
 
   const currentUser = await User.findById(user._id);
 
