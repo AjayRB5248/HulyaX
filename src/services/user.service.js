@@ -40,7 +40,7 @@ const handleUserCreation = async (userBody) => {
   } = userBody || {};
   //return user
   if (role !== ALL_ROLES[1]) {
-    newUser = User.create({ name, email, password, role, mobileNumber });
+    newUser = User.create({ name, email, password, role, mobileNumber,isApproved:true });
     return newUser;
   }
 
@@ -61,7 +61,10 @@ const handleUserCreation = async (userBody) => {
     role,
     company: newCompany._id,
     mobileNumber,
+    isApproved : false
   });
+
+
 
   newCompany.admin = newUser._id;
 

@@ -6,6 +6,7 @@ const UserModel = require("../models/user.model");
 const EventModel = require("../models/events.model");
 const VenueModel = require("../models/venue.model");
 const ArtistModel = require("../models/artist.model");
+const User = require("../models/user.model");
 
 const fetchPermissionList = catchAsync(async (req, res) => {
   res
@@ -135,6 +136,24 @@ const deleteArtist = catchAsync(async (req, res) => {
   return res.status(httpStatus.CREATED).send({ deleted });
 });
 
+const approveCompany = catchAsync(async (req, res) => {
+  try {
+    const {userId,isApproved} = req.body;
+    if (!userId)
+      return res
+        .status(httpStatus.INTERNAL_SERVER_ERROR)
+        .send("UserId is required");
+
+    const updatedUser = await User.findByIdAndUpdate(userId,{isApproved},{new:true});
+
+    if (!updatedUser) throw new Error("Update company failed");
+
+    return res.status(httpStatus.CREATED).send({ updatedUser });
+  } catch (error) {
+    throw new Error("Update company failed");
+  }
+});
+
 module.exports = {
   fetchPermissionList,
   updatePermission,
@@ -145,4 +164,5 @@ module.exports = {
   addArtist,
   updateArtist,
   deleteArtist,
+  approveCompany
 };

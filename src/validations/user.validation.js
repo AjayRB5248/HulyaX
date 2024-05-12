@@ -63,6 +63,14 @@ const updatePassword = {
 };
 
 
+const approveCompany = {
+  body: Joi.object().keys({
+    userId : Joi.string().required(),
+    isApproved: Joi.boolean().required()
+  }),
+};
+
+
 
 
 module.exports = {
@@ -72,5 +80,6 @@ module.exports = {
   updateUser,
   deleteUser,
   updateMobileNumber,
-  updatePassword
+  updatePassword,
+  approveCompany
 };

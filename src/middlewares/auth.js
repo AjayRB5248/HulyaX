@@ -15,6 +15,13 @@ const verifyCallback =
         new ApiError(httpStatus.UNAUTHORIZED, "Please authenticate")
       );
     }
+
+    if (["companyAdmin"]?.includes(user.role) && user?.isApproved !== true)
+      return reject(
+        new ApiError(httpStatus.FORBIDDEN, "Company Not Approved By Admin !")
+      );
+
+
     req.user = user;
 
     if (requiredRights.length) {

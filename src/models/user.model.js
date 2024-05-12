@@ -75,6 +75,12 @@ const userSchema = mongoose.Schema(
       default: [PERMISSION_CONSTANTS.PURCHASE_TICKETS],
       enum: Object.values(PERMISSION_CONSTANTS),
     },
+
+    isApproved : {
+      type : Boolean,
+      default : false
+    }
+
   },
   {
     timestamps: true,

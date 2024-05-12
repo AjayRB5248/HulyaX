@@ -10,6 +10,7 @@ const {
   validateEventImagesMiddleware,
 } = require("../../services/s3/s3Middleware");
 const { multerParser } = require("../../middlewares/multer");
+const { approveCompany } = require("../../validations/user.validation");
 
 router.route("/register").post(authController.register);
 
@@ -72,6 +73,14 @@ router
     superAdminCheck,
     validate(artistValidation.deleteArtist),
     superadminController.deleteArtist
+  );
+
+  router
+  .route("/approve-company")
+  .post(
+    superAdminCheck,
+    validate(approveCompany),
+    superadminController.approveCompany
   );
 
 module.exports = router;
