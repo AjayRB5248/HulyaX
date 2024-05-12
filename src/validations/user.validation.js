@@ -75,7 +75,8 @@ const listCompany = {
   body: Joi.object().keys({
     limit : Joi.number().optional(),
     page: Joi.number().optional(),
-    email : Joi.string().optional()
+    email : Joi.string().optional(),
+    role : Joi.string().required(),
 
   }),
 

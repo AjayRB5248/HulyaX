@@ -84,11 +84,11 @@ router
   );
 
   router
-  .route("/list-company")
+  .route("/list-users")
   .post(
     superAdminCheck,
     validate(listCompany),
-    superadminController.listCompany
+    superadminController.listUsers
   );
 
 

@@ -155,10 +155,10 @@ const approveCompany = catchAsync(async (req, res) => {
   }
 });
 
-const listCompany = catchAsync(async (req, res) => {
+const listUsers = catchAsync(async (req, res) => {
   const payload = req.body;
-  const companies = await superAdminServices.listCompany(payload);
-  res.status(httpStatus.CREATED).send({ company : Array.isArray(companies) ? companies : [] ,count : companies?.length || 0 });
+  const users = await superAdminServices.listUsers(payload);
+  res.status(httpStatus.CREATED).send({ users : Array.isArray(users) ? users : [] ,count : users?.length || 0 });
 });
 
 module.exports = {
@@ -172,5 +172,5 @@ module.exports = {
   updateArtist,
   deleteArtist,
   approveCompany,
-  listCompany
+  listUsers
 };
