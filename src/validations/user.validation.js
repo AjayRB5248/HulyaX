@@ -53,6 +53,17 @@ const updateMobileNumber = {
   }),
 };
 
+const updatePassword = {
+  body: Joi.object().keys({
+    password: Joi.string().required().custom(password),
+    newPassword: Joi.string().required().custom(password),
+    confirmPassword: Joi.string().required().custom(password)
+
+  }),
+};
+
+
+
 
 module.exports = {
   createUser,
@@ -60,5 +71,6 @@ module.exports = {
   getUser,
   updateUser,
   deleteUser,
-  updateMobileNumber
+  updateMobileNumber,
+  updatePassword
 };

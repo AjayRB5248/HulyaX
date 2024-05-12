@@ -161,12 +161,39 @@ const updateMobileNumbers = async (user, mobileNumber, otp) => {
     );
   }
 
+  
+
 
 
   await verifyOtp(user._id, otp, tokenTypes.OTP_CHANGE_MOBILE);
   await User.findByIdAndUpdate(user._id, { mobileNumber });
   return 0;
 };
+
+const updatePassword = async (user, password, newPassword, confirmPassword) => {
+  if (newPassword + "" !== confirmPassword + "") {
+    throw new ApiError(
+      httpStatus.NOT_ACCEPTABLE,
+      "New passwords do not match."
+    );
+  }
+
+
+  const currentUser = await User.findById(user._id);
+
+  const isMatched = await currentUser.isPasswordMatch(password);
+  if (!isMatched)
+    throw new ApiError(
+      httpStatus.NOT_ACCEPTABLE,
+      "Current Password is not a valid"
+    );
+
+  currentUser.password = newPassword;
+  await currentUser.save();
+
+  return 0;
+};
+
 
 
 module.exports = {
@@ -178,5 +205,6 @@ module.exports = {
   deleteUserById,
   getUserByCriteria,
   updateDisplayPicture,
-  updateMobileNumbers
+  updateMobileNumbers,
+  updatePassword
 };

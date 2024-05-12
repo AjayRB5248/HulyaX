@@ -35,6 +35,11 @@ router
     auth(PERMISSION_CONSTANTS.MANAGE_USERS),
     validate(userValidation.deleteUser),
     userController.deleteUser
+  )
+  .post(
+    auth(PERMISSION_CONSTANTS.MANAGE_USERS),
+    validate(userValidation.updatePassword),
+    userController.updatePassword
   );
 
 router
