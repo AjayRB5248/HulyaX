@@ -35,11 +35,6 @@ router
     auth(PERMISSION_CONSTANTS.MANAGE_USERS),
     validate(userValidation.deleteUser),
     userController.deleteUser
-  )
-  .post(
-    auth(PERMISSION_CONSTANTS.MANAGE_USERS),
-    validate(userValidation.updatePassword),
-    userController.updatePassword
   );
 
 router
@@ -56,6 +51,14 @@ router
     auth(PERMISSION_CONSTANTS.MANAGE_USERS),
     validate(userValidation.updateMobileNumber),
     userController.updateMobilePhone
+  );
+
+
+  router.route("/update-password")
+  .post(
+    auth(PERMISSION_CONSTANTS.MANAGE_USERS),
+    validate(userValidation.updatePassword),
+    userController.updatePassword
   );
 
 module.exports = router;
