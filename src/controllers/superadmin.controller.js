@@ -8,6 +8,8 @@ const VenueModel = require("../models/venue.model");
 const ArtistModel = require("../models/artist.model");
 const StateModel = require("../models/states.model");
 const { uploadToS3Bucket } = require("../services/s3/s3Service");
+const superAdminServices = require("../services/superAdmin.services");
+const User = require("../models/user.model");
 
 const fetchPermissionList = catchAsync(async (req, res) => {
   res
@@ -255,6 +257,30 @@ const removeImages = catchAsync(async (req, res) => {
   return res.status(httpStatus.OK).send({ removed });
 });
 
+const approveCompany = catchAsync(async (req, res) => {
+  try {
+    const {userId,isApproved} = req.body;
+    if (!userId)
+      return res
+        .status(httpStatus.INTERNAL_SERVER_ERROR)
+        .send("UserId is required");
+
+    const updatedUser = await User.findByIdAndUpdate(userId,{isApproved},{new:true});
+
+    if (!updatedUser) throw new Error("Update company failed");
+
+    return res.status(httpStatus.CREATED).send({ updatedUser });
+  } catch (error) {
+    throw new Error("Update company failed");
+  }
+});
+
+const listUsers = catchAsync(async (req, res) => {
+  const payload = req.body;
+  const users = await superAdminServices.listUsers(payload);
+  res.status(httpStatus.CREATED).send({ users : Array.isArray(users) ? users : [] ,count : users?.length || 0 });
+});
+
 module.exports = {
   fetchPermissionList,
   updatePermission,
@@ -271,5 +297,7 @@ module.exports = {
   deleteStatesBySuperAdmin,
   fetchStates,
   removeImages,
-  fetchAllUsers
+  fetchAllUsers,
+  approveCompany,
+  listUsers
 };

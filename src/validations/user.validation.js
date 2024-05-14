@@ -53,6 +53,37 @@ const updateMobileNumber = {
   }),
 };
 
+const updatePassword = {
+  body: Joi.object().keys({
+    password: Joi.string().required().custom(password),
+    newPassword: Joi.string().required().custom(password),
+    confirmPassword: Joi.string().required().custom(password)
+
+  }),
+};
+
+
+const approveCompany = {
+  body: Joi.object().keys({
+    userId : Joi.string().required(),
+    isApproved: Joi.boolean().required()
+  }),
+};
+
+
+const listCompany = {
+  body: Joi.object().keys({
+    limit : Joi.number().optional(),
+    page: Joi.number().optional(),
+    email : Joi.string().optional(),
+    role : Joi.string().required(),
+
+  }),
+
+}
+
+
+
 
 module.exports = {
   createUser,
@@ -60,5 +91,8 @@ module.exports = {
   getUser,
   updateUser,
   deleteUser,
-  updateMobileNumber
+  updateMobileNumber,
+  updatePassword,
+  approveCompany,
+  listCompany
 };

@@ -12,9 +12,10 @@ const {
 const multer = require("multer");
 const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
-const { multerParser, formDataAndImageParserMiddleware, multerUpload } = require("../../middlewares/multer");
 const Joi = require("joi");
 const eventController = require("../../controllers/event.controller");
+const { multerParser } = require("../../middlewares/multer");
+const { approveCompany, listCompany } = require("../../validations/user.validation");
 
 router.route("/register").post(authController.register);
 
@@ -146,5 +147,21 @@ router
 router
   .route("/fetch-all-events")
   .get(superAdminCheck, eventController.listEvents);
+  router
+  .route("/approve-company")
+  .post(
+    superAdminCheck,
+    validate(approveCompany),
+    superadminController.approveCompany
+  );
+
+  router
+  .route("/list-users")
+  .post(
+    superAdminCheck,
+    validate(listCompany),
+    superadminController.listUsers
+  );
+
 
 module.exports = router;

@@ -40,7 +40,7 @@ const handleUserCreation = async (userBody) => {
   } = userBody || {};
   //return user
   if (role !== ALL_ROLES[1]) {
-    newUser = User.create({ name, email, password, role, mobileNumber });
+    newUser = User.create({ name, email, password, role, mobileNumber,isApproved:true });
     return newUser;
   }
 
@@ -61,7 +61,10 @@ const handleUserCreation = async (userBody) => {
     role,
     company: newCompany._id,
     mobileNumber,
+    isApproved : false
   });
+
+
 
   newCompany.admin = newUser._id;
 
@@ -161,12 +164,45 @@ const updateMobileNumbers = async (user, mobileNumber, otp) => {
     );
   }
 
+  
+
 
 
   await verifyOtp(user._id, otp, tokenTypes.OTP_CHANGE_MOBILE);
   await User.findByIdAndUpdate(user._id, { mobileNumber });
   return 0;
 };
+
+const updatePassword = async (user, password, newPassword, confirmPassword) => {
+  if (newPassword + "" !== confirmPassword + "") {
+    throw new ApiError(
+      httpStatus.NOT_ACCEPTABLE,
+      "New passwords do not match."
+    );
+  }
+
+  if (user?.role === "superAdmin")
+    throw new ApiError(
+      httpStatus.NOT_ACCEPTABLE,
+      "GO AWAY BITCH !"
+    );
+
+
+  const currentUser = await User.findById(user._id);
+
+  const isMatched = await currentUser.isPasswordMatch(password);
+  if (!isMatched)
+    throw new ApiError(
+      httpStatus.NOT_ACCEPTABLE,
+      "Current Password is not a valid"
+    );
+
+  currentUser.password = newPassword;
+  await currentUser.save();
+
+  return 0;
+};
+
 
 
 module.exports = {
@@ -178,5 +214,6 @@ module.exports = {
   deleteUserById,
   getUserByCriteria,
   updateDisplayPicture,
-  updateMobileNumbers
+  updateMobileNumbers,
+  updatePassword
 };

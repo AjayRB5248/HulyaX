@@ -53,4 +53,12 @@ router
     userController.updateMobilePhone
   );
 
+
+  router.route("/update-password")
+  .post(
+    auth(PERMISSION_CONSTANTS.MANAGE_USERS),
+    validate(userValidation.updatePassword),
+    userController.updatePassword
+  );
+
 module.exports = router;

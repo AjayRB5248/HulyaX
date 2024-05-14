@@ -71,6 +71,18 @@ const updateMobilePhone  = catchAsync(async (req, res) => {
 
 });
 
+const updatePassword  = catchAsync(async (req, res) => {
+  const {user,body} = req || {};
+  const { password,newPassword,confirmPassword } = body || {} ; 
+  await userService.updatePassword(user,password,newPassword,confirmPassword);
+  res
+  .status(httpStatus.CREATED)
+  .send({ message: "Password Updated successfully" });
+
+
+});
+
+
 
 
 
@@ -82,5 +94,6 @@ module.exports = {
   updateUser,
   deleteUser,
   updateProfilePicture,
-  updateMobilePhone
+  updateMobilePhone,
+  updatePassword
 };
