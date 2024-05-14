@@ -14,7 +14,7 @@ const stateSchema = mongoose.Schema(
     },
     timeZone: {
       type: String,
-      required: true,
+      required: false,
     },
   },
   {

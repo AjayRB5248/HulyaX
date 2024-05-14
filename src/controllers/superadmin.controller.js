@@ -7,6 +7,7 @@ const EventModel = require("../models/events.model");
 const VenueModel = require("../models/venue.model");
 const ArtistModel = require("../models/artist.model");
 const StateModel = require("../models/states.model");
+const { uploadToS3Bucket } = require("../services/s3/s3Service");
 
 const fetchPermissionList = catchAsync(async (req, res) => {
   res
@@ -92,8 +93,20 @@ const deleteVenueBySuperAdmin = catchAsync(async (req, res) => {
 
 //artist related controllers
 const addArtist = catchAsync(async (req, res) => {
-  const payload = req.body.artists;
-  const savedArtists = await ArtistModel.insertMany(payload);
+  const payload = req.body;
+  const files = req.files;
+  const imagesUrls = [];
+  if(files.length){
+    for(const buffer of files){
+      const s3Location = await uploadToS3Bucket(buffer.buffer,'image/png',`artist/${buffer.originalname}`)
+      imagesUrls.push({
+        imageurl: s3Location?.Location,
+        isProfile: buffer.fieldname === "profileImage" ? true : false,
+      });
+    }
+    payload.images = imagesUrls;
+  }
+  const savedArtists = await ArtistModel.create(payload);
   return res.status(httpStatus.CREATED).send({ savedArtists });
 });
 
@@ -105,13 +118,26 @@ const updateArtist = catchAsync(async (req, res) => {
       .send("artistId is required");
   const payload = req.body;
   const updatePayload = { $set: payload };
-  const profileImgUrl = req?.files?.primaryImages
-    .map((url) => url)
-    .filter(Boolean);
-  if (profileImgUrl.length) {
-    updatePayload.$push = {
-      images: { imageurl: profileImgUrl[0], isProfile: true },
-    };
+  const files = req.files;
+  const imagesUrls = [];
+  if (files.length) {
+    for (const buffer of files) {
+      const s3Location = await uploadToS3Bucket(
+        buffer.buffer,
+        "image/png",
+        `artist/${buffer.originalname}`
+      );
+      imagesUrls.push({
+        imageurl: s3Location?.Location,
+        isProfile: buffer.fieldname === "profileImage" ? true : false,
+      });
+    }
+    const profileImgUrl = imagesUrls.find((image) => image.isProfile)?.imageurl;
+    if (profileImgUrl) {
+      updatePayload.$push = {
+        images: { imageurl: profileImgUrl, isProfile: true },
+      };
+    }
   }
   const found  = await ArtistModel.findById(artistId);
   if(!found) throw new Error("Artist not found");
@@ -137,9 +163,22 @@ const deleteArtist = catchAsync(async (req, res) => {
   return res.status(httpStatus.CREATED).send({ deleted });
 });
 
+const fetchArtists = catchAsync(async (req, res) => {
+  const payload = req?.body;
+  const criteria = { isDeleted: false };
+  if (payload.artistName) {
+    criteria.artistName = {$regex: payload.artistName, $options: 'i'};
+  }
+  if (payload.category) {
+    criteria.category = {$regex: payload.category, $options: 'i'};
+  }
+  const artists = await ArtistModel.find(criteria).lean();
+  return res.status(httpStatus.CREATED).send({ artists });
+});
+
 
 const addStatesBySuperAdmin = catchAsync(async (req, res) => {
-  const payload = req.body.venues || {};
+  const payload = req.body.states || {};
   const addedStates = await StateModel.insertMany(payload);
   return res.status(httpStatus.CREATED).send({ addedStates });
 });
@@ -177,6 +216,38 @@ const deleteStatesBySuperAdmin = catchAsync(async (req, res) => {
   return res.status(httpStatus.CREATED).send({ deleted });
 });
 
+const fetchStates = catchAsync(async (req, res) => {
+  const states = await StateModel.find({ isDeleted: false });
+  return res.status(httpStatus.OK).send({ states });
+})
+
+const removeImages = catchAsync(async (req, res) => {
+  const imageId = req?.params?.imageId;
+  const type = req?.body?.type;
+  const entityId = req?.body?.typeId;
+  const criteria = {
+    _id: entityId,
+  };
+  const updatePayload = {
+    $pull: {
+      images: {
+        _id: imageId,
+      },
+    },
+  };
+  let removed;
+  if (type === "artist") {
+    removed = await ArtistModel.findOneAndUpdate(criteria, updatePayload, {
+      new: true,
+    });
+  } else if (type === "event") {
+    removed = await EventModel.findByIdAndUpdate(criteria, updatePayload, {
+      new: true,
+    });
+  }
+  return res.status(httpStatus.OK).send({ removed });
+});
+
 module.exports = {
   fetchPermissionList,
   updatePermission,
@@ -187,7 +258,10 @@ module.exports = {
   addArtist,
   updateArtist,
   deleteArtist,
+  fetchArtists,
   addStatesBySuperAdmin,
   updateStatesBySuperAdmin,
-  deleteStatesBySuperAdmin
+  deleteStatesBySuperAdmin,
+  fetchStates,
+  removeImages
 };

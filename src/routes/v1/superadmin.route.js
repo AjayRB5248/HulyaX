@@ -9,7 +9,11 @@ const superadminController = require("../../controllers/superadmin.controller");
 const {
   validateEventImagesMiddleware,
 } = require("../../services/s3/s3Middleware");
-const { multerParser } = require("../../middlewares/multer");
+const multer = require("multer");
+const storage = multer.memoryStorage();
+const upload = multer({ storage: storage });
+const { multerParser, formDataAndImageParserMiddleware, multerUpload } = require("../../middlewares/multer");
+const Joi = require("joi");
 
 router.route("/register").post(authController.register);
 
@@ -49,20 +53,29 @@ router
     superadminController.deleteVenueBySuperAdmin
   );
 
+/* state related apis */
 router
-  .route("/artists/add-artists")
+  .route("/artists/fetch-artist")
   .post(
     superAdminCheck,
-    multerParser,
-    validate(artistValidation.addArtist),
+    superadminController.fetchArtists
+  );
+
+
+router
+  .route("/artists/add-artist")
+  .post(
+    superAdminCheck,
+    upload.any(),
     superadminController.addArtist
   );
+
 router
   .route("/artists/:artistId")
   .put(
     superAdminCheck,
-    validateEventImagesMiddleware("profileImage", "images"),
-    validate(artistValidation.updateArtist),
+    upload.any(),
+    // validate(artistValidation.updateArtist),
     superadminController.updateArtist
   );
 
@@ -74,11 +87,11 @@ router
     superadminController.deleteArtist
   );
 
+/* state related apis */
 router
   .route("/states/add-states")
   .post(
     superAdminCheck,
-    multerParser,
     validate(venueValidation.addStates),
     superadminController.addStatesBySuperAdmin
   );
@@ -90,4 +103,26 @@ router
 router
   .route("/states/:stateId")
   .delete(superAdminCheck, superadminController.deleteStatesBySuperAdmin);
+
+router
+  .route("/states/list")
+  .get(superAdminCheck, superadminController.fetchStates);
+
+
+//remove images related apis for all
+router.route("/images/:imageId").delete(
+  superAdminCheck,
+  validate({
+    body: Joi.object().keys({
+      type: Joi.string()
+        .valid(...["artist", "event"])
+        .required(),
+      typeId: Joi.string()
+        .required()
+        .description("id of the artist or event to remove images"),
+    }),
+  }),
+  superadminController.removeImages
+);
+
 module.exports = router;
