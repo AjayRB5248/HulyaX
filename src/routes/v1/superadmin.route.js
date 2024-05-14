@@ -14,6 +14,7 @@ const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
 const { multerParser, formDataAndImageParserMiddleware, multerUpload } = require("../../middlewares/multer");
 const Joi = require("joi");
+const eventController = require("../../controllers/event.controller");
 
 router.route("/register").post(authController.register);
 
@@ -21,6 +22,11 @@ router
   .route("/permission-list")
   .get(superAdminCheck, superadminController.fetchPermissionList)
   .put(superAdminCheck, superadminController.updatePermission);
+
+
+router
+  .route("/fetch-all-users")
+  .get(superAdminCheck, superadminController.fetchAllUsers);
 
 router
   .route("/events/:eventId")
@@ -124,5 +130,21 @@ router.route("/images/:imageId").delete(
   }),
   superadminController.removeImages
 );
+
+router
+  .route("/add-new-event")
+  .post(
+    superAdminCheck,
+    upload.any(),
+    eventController.addEvent
+  );
+
+router
+  .route("/assign-companies-to-events")
+  .post(superAdminCheck, eventController.assignCompaniesToEvents);
+
+router
+  .route("/fetch-all-events")
+  .get(superAdminCheck, eventController.listEvents);
 
 module.exports = router;

@@ -16,51 +16,34 @@ const addEvent = async (payload, user) => {
     eventName,
     eventDescription,
     artists,
-    venues,
-    ticketSettings,
-    eventImages,
+    images,
     status,
     tags,
     eventCategory,
     videoUrl,
+    states,
   } = payload;
-  const eventOwner = user._id;
 
-  const artistData = artists.map((artistId) => artistId).filter(Boolean);
+  const saved = await EventsModel.findOneAndUpdate(
+    { eventName },
+    {
+      status,
+      eventName,
+      eventDescription,
+      artists,
+      images,
+      tags,
+      eventCategory,
+      videoUrl,
+      states,
+    },
+    { upsert: true, new: true }
+  ).populate("artists states").lean();
+  
+  return saved;
+};
 
-  const venueData = venues.map((venue) => {
-    return {
-      _id: venue.venueId,
-      eventDate: convertToUTC(venue.dateOfEvent, venue.timeZone),
-    };
-  });
-
-  let eventImageDetails = eventImages.secondaryImages.map((im) => {
-    return {
-      imageurl: im,
-      isPrimary: false,
-    };
-  });
-  eventImageDetails = [
-    ...eventImageDetails,
-    { imageurl: eventImages.primaryImages[0], isPrimary: true },
-  ];
-
-  const eventToSave = new EventsModel({
-    status,
-    eventName,
-    eventDescription,
-    eventOwner,
-    artists: artistData,
-    venues: venueData,
-    eventImages: eventImageDetails,
-    tags,
-    eventCategory,
-    videoUrl,
-  });
-  const saved = await eventToSave.save();
-  const updatedEvent = await setupEventTickets(saved, ticketSettings);
-  return updatedEvent;
+const assignCompaniesToEvents = async (payload) => {
 };
 
 const setupEventTickets = async (eventDoc, ticketSettings) => {
@@ -91,7 +74,8 @@ const setupEventTickets = async (eventDoc, ticketSettings) => {
     .populate({
       path: "venues._id",
       model: "Venue",
-    }).lean();
+    })
+    .lean();
 
   const eventVenues = updatedEvent.venues;
   delete updatedEvent.venues;
@@ -119,103 +103,49 @@ const listEvents = async (filterParams, requestUser) => {
   }
 
   if (filterParams) {
-    const { eventName, artist, city, eventDate, venueName, eventCategory } =
+    const { eventName, artist, states, city, eventDate, venueName, eventCategory } =
       filterParams;
     if (eventCategory)
       criteria.eventCategory = { $regex: eventCategory, $options: "i" };
     if (eventName) criteria.eventName = { $regex: eventName, $options: "i" };
-    if (eventDate) {
-      const convertedEventDate = convertToUTC(eventDate, `Australia/${city}`);
-      criteria.venues["$elemMatch"]["eventDate"] = {
-        $gte: new Date(convertedEventDate.startOf("day").toISOString()),
-        $lte: new Date(convertedEventDate.endOf("day").toISOString()),
-      };
-    }
+    if (artist) criteria.artist = { $in: [artist] };
+    if (artist) criteria.artist = { $in: [artist] };
+    if (states) criteria.states = { $in: [states] };
+    
+    // if (eventDate) {
+    //   const convertedEventDate = convertToUTC(eventDate, `Australia/${city}`);
+    //   criteria.venues["$elemMatch"]["eventDate"] = {
+    //     $gte: new Date(convertedEventDate.startOf("day").toISOString()),
+    //     $lte: new Date(convertedEventDate.endOf("day").toISOString()),
+    //   };
+    // }
 
-    if (city || venueName) {
-      const venueCriteria = {};
-      if(city) venueCriteria.city = { $regex: city, $options:"i" };
-      if(venueName) venueCriteria.venueName = { $regex: venueName, $options:"i" };
-      let venues = await VenueModel.find(venueCriteria).select('_id');
-      if(!venues?.length) throw new Error("EVENTS NOT FOUND");
-      venues = venues.map((v) => v._id);
-      criteria['venues._id'] = { $in : venues}
-    }
+    // if (city || venueName) {
+    //   const venueCriteria = {};
+    //   if (city) venueCriteria.city = { $regex: city, $options: "i" };
+    //   if (venueName)
+    //     venueCriteria.venueName = { $regex: venueName, $options: "i" };
+    //   let venues = await VenueModel.find(venueCriteria).select("_id");
+    //   if (!venues?.length) throw new Error("EVENTS NOT FOUND");
+    //   venues = venues.map((v) => v._id);
+    //   criteria["venues._id"] = { $in: venues };
+    // }
 
-    if(artist){
-      const artistCriteria = {};
-      if(artist) artistCriteria.artistName = { $regex: artist, $options:"i" };
-      let artistIds = await ArtistModel.find(artistCriteria).select('_id');
-      if(!artistIds?.length) throw new Error("EVENTS NOT FOUND");
-      artistIds = artistIds.map((a) => a._id);
-      criteria.artists = { $in : artistIds}
-    }
+    // if (artist) {
+    //   const artistCriteria = {};
+    //   if (artist) artistCriteria.artistName = { $regex: artist, $options: "i" };
+    //   let artistIds = await ArtistModel.find(artistCriteria).select("_id");
+    //   if (!artistIds?.length) throw new Error("EVENTS NOT FOUND");
+    //   artistIds = artistIds.map((a) => a._id);
+    //   criteria.artists = { $in: artistIds };
+    // }
   }
 
   const dbEvent = await EventsModel.find(criteria)
-    .populate({
-        path: 'venues._id',
-        model: 'Venue',
-    })
-    .populate('artists ticketTypes')
+    .populate("states artists")
     .lean();
 
-  const events = dbEvent.map((event) => {
-    const eventVenues = event.venues;
-    delete event.venues;
-    return {
-      ...event,
-      venues: eventVenues.map((v) => {
-        return {
-          ...v._id,
-        };
-      }),
-    };
-  });
-  
-  let processedEvents = events
-    .map((event) => {
-      return {
-        ...event,
-      };
-    })
-    .filter(Boolean);
-
-  // todo : optimize this
-  if (filterParams.city || filterParams.venueName || filterParams.artist) {
-    const { city, venueName, artist } = filterParams;
-    if (city) {
-      processedEvents = processedEvents.map((event) => {
-        return {
-          ...event,
-          venues: event.venues.filter(
-            (v) => v.city.toLowerCase() === city.toLowerCase()
-          ),
-        };
-      });
-    }
-    if (venueName) {
-      processedEvents = processedEvents.map((event) => {
-        return {
-          ...event,
-          venues: event.venues.filter(
-            (v) => v.venueName.toLowerCase() === venueName.toLowerCase()
-          ),
-        };
-      });
-    }
-    if (artist) {
-      processedEvents = processedEvents.map((event) => {
-        return {
-          ...event,
-          artists: event.artists.filter(
-            (v) => v.artistName.toLowerCase() === artist.toLowerCase()
-          ),
-        };
-      });
-    }
-  }
-  return processedEvents;
+  return dbEvent;
 };
 
 const editEvent = async (payload, user) => {
@@ -243,7 +173,7 @@ const editEvent = async (payload, user) => {
       };
     }),
   };
-  
+
   if (!event) throw new Error("Event not found");
 
   const foundEvent = event.map((event) => {
@@ -375,24 +305,18 @@ const deleteEvent = async (eventId, user) => {
     $set: { isDeleted: false },
   });
   if (!foundEvent) throw new Error("Event not found");
-  const deletedEvent = await EventsModel.findOneAndUpdate(critera, { $set: { isDeleted: true } },{new: true}).lean();
+  const deletedEvent = await EventsModel.findOneAndUpdate(
+    critera,
+    { $set: { isDeleted: true } },
+    { new: true }
+  ).lean();
   return deletedEvent;
 };
 
 const getEvent = async (eventId) => {
   const currentEvents = await EventsModel.findById(eventId)
-    .populate("ticketTypes artists venues")
     .lean();
   if (!currentEvents) throw new Error("Event not found");
-  const venues = currentEvents.venues
-    .map((e) => {
-      return {
-        ...e,
-        // eventDate: convertFromUTC(e.eventDate, e.timeZone),  : conversoin should be at FE
-      };
-    })
-    .filter(Boolean);
-
   return { ...currentEvents, venues };
 };
 
@@ -564,4 +488,5 @@ module.exports = {
   removeItemsFromEvent,
   listVenues,
   listArtists,
+  assignCompaniesToEvents
 };

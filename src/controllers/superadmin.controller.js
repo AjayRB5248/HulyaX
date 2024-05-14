@@ -15,6 +15,13 @@ const fetchPermissionList = catchAsync(async (req, res) => {
     .send({ PERMISSION_CONSTANTS: Object.values(PERMISSION_CONSTANTS) });
 });
 
+const fetchAllUsers = catchAsync(async (req, res) => {
+  const critera = {};
+  if (req?.query?.role) critera.role = req?.query?.role;
+  const users = await UserModel.find(critera).lean();
+  return res.status(httpStatus.CREATED).send({ users });
+});
+
 const updatePermission = catchAsync(async (req, res) => {
   const { userId, permissions } = req.body;
   // Add these in middleware validators
@@ -263,5 +270,6 @@ module.exports = {
   updateStatesBySuperAdmin,
   deleteStatesBySuperAdmin,
   fetchStates,
-  removeImages
+  removeImages,
+  fetchAllUsers
 };

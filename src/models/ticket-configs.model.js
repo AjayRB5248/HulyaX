@@ -5,15 +5,19 @@ const ticketConfigSchema = mongoose.Schema(
   {
     eventId: {
       type: Schema.Types.ObjectId,
-      ref: "Events",
+      ref: "SubEvents",
       required: true,
     },
     venueId: {
       type: mongoose.Types.ObjectId,
     },
-    eventOwner : {
-      type: mongoose.Types.ObjectId,
-    },
+    eventOwners: [
+      //companies that will own event at these states
+      {
+        type: mongoose.Types.ObjectId,
+        ref: "User",
+      },
+    ],
     type: {
       type: String,
       required: true,

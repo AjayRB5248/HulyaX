@@ -2,13 +2,60 @@ const httpStatus = require("http-status");
 const catchAsync = require("../utils/catchAsync");
 const eventService = require("../services/event.service");
 const { EVENT_STATUS } = require("../utility/constants");
+const { uploadToS3Bucket } = require("../services/s3/s3Service");
+const SubEventModel = require("../models/subEvents.model");
 
 const addEvent = catchAsync(async (req, res) => {
   const payload = req.body;
   const user = req.user;
-  payload.eventImages = req.files;
+  const files = req.files;
+  const eventImages = [];
+  for (const file of files) {
+    const s3Location = await uploadToS3Bucket(file.buffer, 'image/png',`eventImages/payload.eventName/${Date.now()}`)
+    eventImages.push({
+      imageurl: s3Location.Location,
+      isPrimary: file.fieldname === "posterImage" ? true : false,
+    });
+  }
+  payload.images = eventImages;
   const newEvent = await eventService.addEvent(payload, user);
   res.status(httpStatus.CREATED).send({ newEvent });
+});
+
+const assignCompaniesToEvents = catchAsync(async (req, res) => {
+  const payload = req?.body;
+  const parentEvent = payload.eventId;
+  const assignments = payload.assignments;
+  const subEvents = assignments.map((stateAccess) => {
+    return {
+      parentEvent,
+      state: stateAccess.state,
+      companies: stateAccess.companies,
+    };
+  }).filter(Boolean);
+
+  SubEventModel.insertMany(subEvents,async(err, inserted) => {
+    if (err) {
+      throw err;
+    }
+    const insertedIds = inserted.map(doc=>doc._id);
+    const insertedSubEvents = await SubEventModel.find({
+      _id: { $in: insertedIds },
+    }).populate([
+      {
+        path: "companies",
+        select: { email: 1, name: 1 },
+      },
+      {
+        path: 'parentEvent',
+        select: {eventName:1,eventDescription:1},
+      },
+      {
+        path: "state",
+      },
+    ]);
+    return res.status(httpStatus.CREATED).send({ insertedSubEvents });
+  })
 });
 
 const setupEventTickets = catchAsync(async (req, res) => {
@@ -86,6 +133,7 @@ const getPossibleEventArtists = catchAsync(async (req, res) => {
 
 module.exports = {
   addEvent,
+  assignCompaniesToEvents,
   setupEventTickets,
   listEvents,
   editEvents,
