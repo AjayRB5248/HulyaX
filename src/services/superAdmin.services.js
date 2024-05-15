@@ -1,4 +1,5 @@
 const StateModel = require("../models/states.model");
+const SubEventModel = require("../models/subEvents.model");
 const TicketConfigModel = require("../models/ticket-configs.model");
 const User = require("../models/user.model");
 const VenueModel = require("../models/venue.model");
@@ -57,40 +58,59 @@ const listStates = async () => {
 };
 
 
-const listVenue = async () =>{
-  const venues = await VenueModel.find().populate("state");
+const listVenue = async (stateId) =>{
+
+  let critera = {};
+  if(stateId) critera.stage = stateId;
+
+  const venues = await VenueModel.find(critera).populate("state");
   return venues;
 }
 
-const addTicketService = async (user,payload) => {
+const addTicketService = async (user, payload) => {
+  if (!payload?.eventId) throw new Error(`Event Id is required`);
 
-  if(!payload?.eventId) throw new Error(`Event Id is required`);
-
-  if(!payload?.venueId) throw new Error(`Venue Id is required`);
+  if (!payload?.venueId) throw new Error(`Venue Id is required`);
 
   if (!payload?.type) throw new Error(`Ticket Type is required`);
 
   if (!payload?.price) throw new Error(`Ticket Price is required`);
 
-  if(!payload?.totalSeats) throw new Error(`TotalSeats is required`);
+  if (!payload?.totalSeats) throw new Error(`TotalSeats is required`);
 
+  if (user?.role === "superAdmin" && !payload?.eventOwners)
+    throw new Error("Provide event owner incase of superadmin");
 
-  if(user?.role === "superAdmin" && !payload?.eventOwners) throw new Error ("Provide event owner incase of superadmin");
+  if (user?.role === "isCompanyAdmin" && user?.isApproved === false)
+    throw new Error("Company must be registered");
+
+  const eventOwners = payload?.eventOwners || req?.user?._id;
+
+  const assignedEvent = await SubEventModel.findById(payload?.eventId);
+
+  if (assignedEvent) throw new Error("Event must be registered !"); 
 
   const currentTicket = await TicketConfigModel.findOne({
     eventId: payload.eventId,
-    type : payload.type,
-    venueId : payload.venueId
+    type: payload.type,
+    venueId: payload.venueId,
   });
 
-  if(currentTicket) throw new Error ("Ticket Already Created for event ! Modify Existing Ticket");
+  if (currentTicket)
+    throw new Error(
+      "Ticket Already Created for event ! Modify Existing Ticket"
+    );
 
+  const createdTickets = await TicketConfigModel.create({
+    eventId: payload?.eventId,
+    venueId: payload?.venueId,
+    eventOwners: [eventOwners],
+    type: payload?.type,
+    price: payload?.price,
+    totalSeats: payload?.totalSeats,
+  });
 
-
-
-
-
-
+  return createdTickets;
 };
 
 module.exports = {

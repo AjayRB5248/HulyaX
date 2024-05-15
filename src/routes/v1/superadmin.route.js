@@ -142,7 +142,7 @@ router
 
 router
   .route("/assign-companies-to-events")
-  .post(superAdminCheck,eventController.assignCompaniesToEvents)
+  .post(eventController.assignCompaniesToEvents)
   .delete(superAdminCheck,eventController.removeCompanyFromEvents)
   
   
@@ -184,9 +184,9 @@ router
 
 
   router
-  .route("/add-ticket")
+  .route("/add-ticket")   /// this route can be accessed by superadmin and approved company only
   .post(
-    superadminController.listState
+    superadminController.addTickets
   );
 
 
