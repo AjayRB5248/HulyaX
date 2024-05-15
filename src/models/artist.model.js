@@ -18,7 +18,6 @@ const artistSchema = mongoose.Schema(
     artistName: {
       type: String,
       required: true,
-      unique: true
     },
     isDeleted: {
       type: Boolean,
