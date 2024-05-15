@@ -288,10 +288,18 @@ const listState = catchAsync(async (req, res) => {
 });
 
 
+
+const listVenue = catchAsync(async (req, res) => {
+  const {state : stateId} = req?.body || {};
+  const venues = await superAdminServices.listVenue(stateId);
+  res.status(httpStatus.CREATED).send({ venues : Array.isArray(venues) ? venues : [] ,count : venues?.length || 0 });
+});
+
+
 const addTickets = catchAsync(async(req,res,next)=>{
   const {user,body} = req || {};
   const addedTickets = await superAdminServices.addTicketService(user,body);
-  
+
 })
 
 
@@ -315,5 +323,6 @@ module.exports = {
   approveCompany,
   listUsers,
   listState,
-  addTickets
+  addTickets,
+  listVenue
 };

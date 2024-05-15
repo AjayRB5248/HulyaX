@@ -15,7 +15,7 @@ const upload = multer({ storage: storage });
 const Joi = require("joi");
 const eventController = require("../../controllers/event.controller");
 const { multerParser } = require("../../middlewares/multer");
-const { approveCompany, listCompany } = require("../../validations/user.validation");
+const { approveCompany, listCompany, listVenue } = require("../../validations/user.validation");
 
 router.route("/register").post(authController.register);
 
@@ -172,6 +172,14 @@ router
   .get(
     superAdminCheck,
     superadminController.listState
+  );
+
+  router
+  .route("/list-venue")
+  .post(
+    superAdminCheck,
+    validate(listVenue),
+    superadminController.listVenue
   );
 
 

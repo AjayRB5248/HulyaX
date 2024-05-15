@@ -1,5 +1,7 @@
 const StateModel = require("../models/states.model");
+const TicketConfigModel = require("../models/ticket-configs.model");
 const User = require("../models/user.model");
+const VenueModel = require("../models/venue.model");
 
 const listUsers = async (payload) => {
   try {
@@ -54,9 +56,37 @@ const listStates = async () => {
   return states;
 };
 
+
+const listVenue = async () =>{
+  const venues = await VenueModel.find().populate("state");
+  return venues;
+}
+
 const addTicketService = async (user,payload) => {
 
+  if(!payload?.eventId) throw new Error(`Event Id is required`);
+
+  if(!payload?.venueId) throw new Error(`Venue Id is required`);
+
+  if (!payload?.type) throw new Error(`Ticket Type is required`);
+
+  if (!payload?.price) throw new Error(`Ticket Price is required`);
+
+  if(!payload?.totalSeats) throw new Error(`TotalSeats is required`);
+
+
   if(user?.role === "superAdmin" && !payload?.eventOwners) throw new Error ("Provide event owner incase of superadmin");
+
+  const currentTicket = await TicketConfigModel.findOne({
+    eventId: payload.eventId,
+    type : payload.type,
+    venueId : payload.venueId
+  });
+
+  if(currentTicket) throw new Error ("Ticket Already Created for event ! Modify Existing Ticket");
+
+
+
 
 
 
@@ -66,5 +96,6 @@ const addTicketService = async (user,payload) => {
 module.exports = {
   listUsers,
   listStates,
-  addTicketService
+  addTicketService,
+  listVenue
 };

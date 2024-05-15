@@ -79,9 +79,15 @@ const listCompany = {
     role : Joi.string().required(),
 
   }),
-
 }
 
+
+const listVenue = {
+  body: Joi.object().keys({
+    state : Joi.string().optional(),
+
+  }),
+}
 
 
 
@@ -94,5 +100,6 @@ module.exports = {
   updateMobileNumber,
   updatePassword,
   approveCompany,
-  listCompany
+  listCompany,
+  listVenue
 };
