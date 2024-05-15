@@ -142,7 +142,7 @@ router
 
 router
   .route("/assign-companies-to-events")
-  .post( eventController.assignCompaniesToEvents);
+  .post(superAdminCheck, eventController.assignCompaniesToEvents);
 
 router
   .route("/fetch-all-events")
