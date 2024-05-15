@@ -288,6 +288,13 @@ const listState = catchAsync(async (req, res) => {
 });
 
 
+const addTickets = catchAsync(async(req,res,next)=>{
+  const {user,body} = req || {};
+  const addedTickets = await superAdminServices.addTicketService(user,body);
+  
+})
+
+
 module.exports = {
   fetchPermissionList,
   updatePermission,
@@ -307,5 +314,6 @@ module.exports = {
   fetchAllUsers,
   approveCompany,
   listUsers,
-  listState
+  listState,
+  addTickets
 };

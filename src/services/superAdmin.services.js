@@ -33,7 +33,7 @@ const listUsers = async (payload) => {
           isApproved: 1,
           permissions: 1,
           name: 1,
-          role:1
+          role: 1,
         },
       },
     ];
@@ -49,13 +49,22 @@ const listUsers = async (payload) => {
   }
 };
 
-
-const listStates = async () =>{
-  const states = await StateModel.find().select("-_id");
+const listStates = async () => {
+  const states = await StateModel.find();
   return states;
-}
+};
+
+const addTicketService = async (user,payload) => {
+
+  if(user?.role === "superAdmin" && !payload?.eventOwners) throw new Error ("Provide event owner incase of superadmin");
+
+
+
+
+};
 
 module.exports = {
   listUsers,
-  listStates
+  listStates,
+  addTicketService
 };
