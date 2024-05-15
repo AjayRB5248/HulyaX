@@ -142,7 +142,10 @@ router
 
 router
   .route("/assign-companies-to-events")
-  .post(superAdminCheck, eventController.assignCompaniesToEvents);
+  .post(superAdminCheck,eventController.assignCompaniesToEvents)
+  .delete(superAdminCheck,eventController.removeCompanyFromEvents)
+  
+  
 
 router
   .route("/fetch-all-events")

@@ -14,6 +14,7 @@ const venueShema = {
 
 const subEventSchema = mongoose.Schema(
   {
+
     status: {
       type: String,
       default: EVENT_STATUS.PLANNED,
@@ -49,6 +50,9 @@ const subEventSchema = mongoose.Schema(
     timestamps: true,
   }
 );
+
+subEventSchema.index({ companies: 1 });
+
 
 const SubEventModel = mongoose.model("SubEvents", subEventSchema);
 

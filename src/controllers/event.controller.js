@@ -4,6 +4,7 @@ const eventService = require("../services/event.service");
 const { EVENT_STATUS } = require("../utility/constants");
 const { uploadToS3Bucket } = require("../services/s3/s3Service");
 const SubEventModel = require("../models/subEvents.model");
+const EventModel = require("../models/events.model");
 
 const addEvent = catchAsync(async (req, res) => {
   const payload = req.body;
@@ -47,11 +48,22 @@ const assignCompaniesToEvents = catchAsync(async (req, res) => {
   if(toInserEvents?.length === 0 ) throw new Error("Event May Be already assigned or Assigned to another company");
 
 
-  SubEventModel.insertMany(subEvents,async(err, inserted) => {
+  SubEventModel.insertMany(subEvents, async (err, inserted) => {
     if (err) {
       throw err;
     }
-    const insertedIds = inserted.map(doc=>doc._id);
+
+    await EventModel.findByIdAndUpdate(parentEvent, {
+      $push: {
+        assignedCompany: {
+          state: subEvents?.[0]?.state,
+          companyId: subEvents?.[0]?.companies?.[0],
+        },
+      },
+    });
+
+    const insertedIds = inserted.map((doc) => doc._id);
+
     const insertedSubEvents = await SubEventModel.find({
       _id: { $in: insertedIds },
     }).populate([
@@ -60,16 +72,45 @@ const assignCompaniesToEvents = catchAsync(async (req, res) => {
         select: { email: 1, name: 1 },
       },
       {
-        path: 'parentEvent',
-        select: {eventName:1,eventDescription:1},
+        path: "parentEvent",
+        select: { eventName: 1, eventDescription: 1 },
       },
       {
         path: "state",
       },
     ]);
     return res.status(httpStatus.CREATED).send({ insertedSubEvents });
-  })
+  });
 });
+
+
+const removeCompanyFromEvents = catchAsync(async (req, res) => {
+  const payload = req?.body;
+  const { eventId, state, companyId } = payload;
+  await SubEventModel.deleteOne({
+    parentEvent: eventId,
+    state: state,
+    "companies.0": companyId,
+  });
+
+  await EventModel.findOneAndUpdate(
+    {
+      _id: eventId,
+    },
+    {
+      $pull: {
+        assignedCompany: {
+          companyId,
+          state,
+        },
+      },
+    }
+  );
+
+  return res.status(httpStatus.CREATED).send({ success: true });
+});
+
+
 
 const setupEventTickets = catchAsync(async (req, res) => {
   const payload = req.body;
@@ -156,5 +197,6 @@ module.exports = {
   deleteEvent,
   getEventStatuses,
   getPossibleEventVenues,
-  getPossibleEventArtists
+  getPossibleEventArtists,
+  removeCompanyFromEvents
 };

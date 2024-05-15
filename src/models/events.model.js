@@ -14,6 +14,17 @@ const eventImageSchema = {
   },
 };
 
+const companyAssignedSchema = {
+  state : {
+    type : mongoose.Types.ObjectId,
+    ref : "state"
+  },
+  companyId : {
+    type : mongoose.Types.ObjectId,
+    ref : "User"
+  }
+}
+
 const eventSchema = mongoose.Schema(
   {
     status: {
@@ -67,6 +78,9 @@ const eventSchema = mongoose.Schema(
     eventCategory: {
       type: String,
     },
+
+    assignedCompany  : [companyAssignedSchema]
+
   },
   {
     timestamps: true,
