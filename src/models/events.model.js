@@ -17,7 +17,7 @@ const eventImageSchema = {
 const companyAssignedSchema = {
   state : {
     type : mongoose.Types.ObjectId,
-    ref : "state"
+    ref : "State"
   },
   companyId : {
     type : mongoose.Types.ObjectId,
