@@ -34,6 +34,19 @@ const assignCompaniesToEvents = catchAsync(async (req, res) => {
     };
   }).filter(Boolean);
 
+
+  const currentEvents = await SubEventModel.find({parentEvent:parentEvent});
+  let toInserEvents = [];
+  subEvents?.forEach(p=>{
+    const isFound = currentEvents?.find((event)=>event?.state+""===p?.state+"" && event?.companies?.[0]+""===p?.companies?.[0]+"");
+    const isAssignedToAnotherCompany = currentEvents?.find(event=>event?.state+""===p?.state+"" && event?.companies?.[0]);
+
+    if(!isFound && !isAssignedToAnotherCompany) toInserEvents.push(p);
+  })
+
+  if(toInserEvents?.length === 0 ) throw new Error("Event May Be already assigned or Assigned to another company");
+
+
   SubEventModel.insertMany(subEvents,async(err, inserted) => {
     if (err) {
       throw err;
