@@ -196,7 +196,12 @@ router
   .post(
     auth(),
     superadminController.updateTicket
-  );
+  )
+  .delete(
+    auth(),
+    superadminController.deleteTickets
+  )
+  ;
 
 
 

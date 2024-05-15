@@ -148,10 +148,26 @@ const updateTicketService = async (user, payload) => {
   return updatedTickets;
 };
 
+
+const deleteTickets = async (user, payload) => {
+
+  if (user.role === "companyAdmin"){
+    const currentTicket = await TicketConfigModel.findById(payload?.ticketConfigId).select("eventOwners");
+    if(!currentTicket?.eventOwners?.includes(user?._id)) throw new Error ("Delete Your Own Ticket Bitch !");
+  }
+
+  if (!payload?.ticketConfigId) throw new Error("Enter ticket Id");
+  await TicketConfigModel.findByIdAndUpdate(payload?.ticketConfigId, {
+    $set: { isDeleted: true },
+  });
+  return true;
+};
+
 module.exports = {
   listUsers,
   listStates,
   addTicketService,
   listVenue,
-  updateTicketService
+  updateTicketService,
+  deleteTickets
 };
