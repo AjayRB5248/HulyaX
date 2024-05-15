@@ -5,8 +5,7 @@ const addVenue = {
     venues: Joi.array().items(
       Joi.object().keys({
         venueName: Joi.string().required(),
-        capacity: Joi.number().optional(),
-        state: Joi.string().required(),
+        state: Joi.string().required()
       })
     ),
   }),
