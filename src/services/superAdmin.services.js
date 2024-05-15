@@ -1,3 +1,4 @@
+const StateModel = require("../models/states.model");
 const User = require("../models/user.model");
 
 const listUsers = async (payload) => {
@@ -48,6 +49,13 @@ const listUsers = async (payload) => {
   }
 };
 
+
+const listStates = async () =>{
+  const states = await StateModel.find().select("-_id");
+  return states;
+}
+
 module.exports = {
   listUsers,
+  listStates
 };

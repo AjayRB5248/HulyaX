@@ -340,6 +340,8 @@ const generatePDFBuffer = (doc) => {
   });
 };
 
+
+
 module.exports = {
   purchaseTicket,
   viewTickets,

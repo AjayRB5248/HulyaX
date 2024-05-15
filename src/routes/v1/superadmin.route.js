@@ -167,4 +167,15 @@ router
   );
 
 
+  router
+  .route("/list-state")
+  .get(
+    superAdminCheck,
+    superadminController.listState
+  );
+
+
+
+
+
 module.exports = router;

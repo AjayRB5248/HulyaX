@@ -281,6 +281,13 @@ const listUsers = catchAsync(async (req, res) => {
   res.status(httpStatus.CREATED).send({ users : Array.isArray(users) ? users : [] ,count : users?.length || 0 });
 });
 
+
+const listState = catchAsync(async (req, res) => {
+  const states = await superAdminServices.listStates();
+  res.status(httpStatus.CREATED).send({ states : Array.isArray(states) ? states : [] ,count : states?.length || 0 });
+});
+
+
 module.exports = {
   fetchPermissionList,
   updatePermission,
@@ -299,5 +306,6 @@ module.exports = {
   removeImages,
   fetchAllUsers,
   approveCompany,
-  listUsers
+  listUsers,
+  listState
 };
