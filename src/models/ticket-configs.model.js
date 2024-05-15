@@ -10,6 +10,7 @@ const ticketConfigSchema = mongoose.Schema(
     },
     venueId: {
       type: mongoose.Types.ObjectId,
+      ref : "Venue"
     },
     eventOwners: [
       //companies that will own event at these states
