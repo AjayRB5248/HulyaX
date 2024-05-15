@@ -9,6 +9,11 @@ const superadminController = require("../../controllers/superadmin.controller");
 const {
   validateEventImagesMiddleware,
 } = require("../../services/s3/s3Middleware");
+const multer = require("multer");
+const storage = multer.memoryStorage();
+const upload = multer({ storage: storage });
+const Joi = require("joi");
+const eventController = require("../../controllers/event.controller");
 const { multerParser } = require("../../middlewares/multer");
 const { approveCompany, listCompany } = require("../../validations/user.validation");
 
@@ -18,6 +23,11 @@ router
   .route("/permission-list")
   .get(superAdminCheck, superadminController.fetchPermissionList)
   .put(superAdminCheck, superadminController.updatePermission);
+
+
+router
+  .route("/fetch-all-users")
+  .get(superAdminCheck, superadminController.fetchAllUsers);
 
 router
   .route("/events/:eventId")
@@ -50,20 +60,29 @@ router
     superadminController.deleteVenueBySuperAdmin
   );
 
+/* state related apis */
 router
-  .route("/artists/add-artists")
+  .route("/artists/fetch-artist")
   .post(
     superAdminCheck,
-    multerParser,
-    validate(artistValidation.addArtist),
+    superadminController.fetchArtists
+  );
+
+
+router
+  .route("/artists/add-artist")
+  .post(
+    superAdminCheck,
+    upload.any(),
     superadminController.addArtist
   );
+
 router
   .route("/artists/:artistId")
   .put(
     superAdminCheck,
-    validateEventImagesMiddleware("profileImage", "images"),
-    validate(artistValidation.updateArtist),
+    upload.any(),
+    // validate(artistValidation.updateArtist),
     superadminController.updateArtist
   );
 
@@ -75,6 +94,59 @@ router
     superadminController.deleteArtist
   );
 
+/* state related apis */
+router
+  .route("/states/add-states")
+  .post(
+    superAdminCheck,
+    validate(venueValidation.addStates),
+    superadminController.addStatesBySuperAdmin
+  );
+
+router
+  .route("/states/:stateId")
+  .put(superAdminCheck, superadminController.updateStatesBySuperAdmin);
+
+router
+  .route("/states/:stateId")
+  .delete(superAdminCheck, superadminController.deleteStatesBySuperAdmin);
+
+router
+  .route("/states/list")
+  .get(superAdminCheck, superadminController.fetchStates);
+
+
+//remove images related apis for all
+router.route("/images/:imageId").delete(
+  superAdminCheck,
+  validate({
+    body: Joi.object().keys({
+      type: Joi.string()
+        .valid(...["artist", "event"])
+        .required(),
+      typeId: Joi.string()
+        .required()
+        .description("id of the artist or event to remove images"),
+    }),
+  }),
+  superadminController.removeImages
+);
+
+router
+  .route("/add-new-event")
+  .post(
+    superAdminCheck,
+    upload.any(),
+    eventController.addEvent
+  );
+
+router
+  .route("/assign-companies-to-events")
+  .post(superAdminCheck, eventController.assignCompaniesToEvents);
+
+router
+  .route("/fetch-all-events")
+  .get(superAdminCheck, eventController.listEvents);
   router
   .route("/approve-company")
   .post(

@@ -5,7 +5,7 @@ const addArtist = {
     artists: Joi.array().items(
       Joi.object().keys({
         artistName: Joi.string().required(),
-        category: Joi.string().required(),
+        category: Joi.string().optional(),
       })
     ),
   }),

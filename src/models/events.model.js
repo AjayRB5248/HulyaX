@@ -14,17 +14,6 @@ const eventImageSchema = {
   },
 };
 
-const venueShema = {
-  _id: {
-    type: mongoose.Types.ObjectId,
-    ref: "Venue",
-  },
-  eventDate: {
-    type: Date,
-    required: true,
-  },
-};
-
 const eventSchema = mongoose.Schema(
   {
     status: {
@@ -49,30 +38,23 @@ const eventSchema = mongoose.Schema(
       type: String,
       required: true,
     },
-    eventOwner: {
-      type: Schema.Types.ObjectId,
-      ref: "User",
-      index: true,
-    },
+    states: [
+      {
+        type: mongoose.Types.ObjectId,
+        ref: "State",
+      },
+    ],
     artists: [
       {
         type: mongoose.Types.ObjectId,
         ref: "Artist",
       },
     ],
-    venues: [venueShema],
     slug: {
       type: String,
-      // required: true,
       unique: true,
     },
-    ticketTypes: [
-      {
-        type: Schema.Types.ObjectId,
-        ref: "TicketConfig",
-      },
-    ],
-    eventImages: [eventImageSchema],
+    images: [eventImageSchema],
     tags: [
       {
         type: String,
@@ -86,7 +68,6 @@ const eventSchema = mongoose.Schema(
       type: String,
     },
   },
-
   {
     timestamps: true,
   }
@@ -118,7 +99,7 @@ eventSchema.pre("findOneAndUpdate", function (next) {
 });
 
 // Validate that there is one and only one primary image
-eventSchema.path("eventImages").validate(function (value) {
+eventSchema.path("images").validate(function (value) {
   const primaryImages = value.filter((image) => image.isPrimary);
   return primaryImages.length === 1;
 }, "One and only one image must be marked as primary");
