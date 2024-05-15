@@ -25,9 +25,7 @@ const addStates = {
 const updateVenue = {
   body: Joi.object().keys({
     venueName: Joi.string().optional(),
-    city: Joi.string().optional(),
-    timeZone: Joi.string().optional(),
-    capacity: Joi.number().optional(),
+    state: Joi.string().optional(),
   }),
 };
 
