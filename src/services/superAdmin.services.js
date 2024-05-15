@@ -60,8 +60,9 @@ const listStates = async () => {
 
 const listVenue = async (stateId) =>{
 
+
   let critera = {};
-  if(stateId) critera.stage = stateId;
+  if(stateId) critera.state = stateId;
 
   const venues = await VenueModel.find(critera).populate("state");
   return venues;
