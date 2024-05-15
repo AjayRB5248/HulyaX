@@ -186,10 +186,17 @@ router
   router
   .route("/add-ticket")   /// this route can be accessed by superadmin and approved company only
   .post(
-    
+    auth(),
     superadminController.addTickets
   );
 
+
+  router
+  .route("/update-ticket")   /// this route can be accessed by superadmin and approved company only
+  .post(
+    auth(),
+    superadminController.updateTicket
+  );
 
 
 

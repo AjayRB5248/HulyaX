@@ -297,10 +297,17 @@ const listVenue = catchAsync(async (req, res) => {
 
 
 const addTickets = catchAsync(async(req,res,next)=>{
-  console.log(req);
   const {user,body} = req || {};
   const addedTickets = await superAdminServices.addTicketService(user,body);
   res.status(httpStatus.CREATED).send({ ticketConfig : addedTickets  });
+
+})
+
+
+const updateTicket = catchAsync(async(req,res,next)=>{
+  const {user,body} = req || {};
+  const updatedTickets = await superAdminServices.updateTicketService(user,body);
+  res.status(httpStatus.CREATED).send({ updatedTickets   });
 
 })
 
@@ -326,5 +333,6 @@ module.exports = {
   listUsers,
   listState,
   addTickets,
-  listVenue
+  listVenue,
+  updateTicket
 };

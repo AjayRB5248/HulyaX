@@ -1,3 +1,4 @@
+const EventModel = require("../models/events.model");
 const StateModel = require("../models/states.model");
 const SubEventModel = require("../models/subEvents.model");
 const TicketConfigModel = require("../models/ticket-configs.model");
@@ -57,16 +58,13 @@ const listStates = async () => {
   return states;
 };
 
-
-const listVenue = async (stateId) =>{
-
-
+const listVenue = async (stateId) => {
   let critera = {};
-  if(stateId) critera.state = stateId;
+  if (stateId) critera.state = stateId;
 
   const venues = await VenueModel.find(critera).populate("state");
   return venues;
-}
+};
 
 const addTicketService = async (user, payload) => {
   if (!payload?.eventId) throw new Error(`Event Id is required`);
@@ -82,19 +80,20 @@ const addTicketService = async (user, payload) => {
   if (user?.role === "superAdmin" && !payload?.eventOwners)
     throw new Error("Provide event owner incase of superadmin");
 
-  if (user?.role === "isCompanyAdmin" && user?.isApproved === false)
+  if (user?.role === "companyAdmin" && user?.isApproved === false)
     throw new Error("Company must be registered");
 
   const eventOwners = payload?.eventOwners || req?.user?._id;
 
   const assignedEvent = await SubEventModel.findById(payload?.eventId);
 
-  if (assignedEvent) throw new Error("Event must be registered !"); 
+  if (assignedEvent) throw new Error("Event must be registered !");
 
   const currentTicket = await TicketConfigModel.findOne({
     eventId: payload.eventId,
     type: payload.type,
     venueId: payload.venueId,
+    isDeleted: false,
   });
 
   if (currentTicket)
@@ -109,14 +108,50 @@ const addTicketService = async (user, payload) => {
     type: payload?.type,
     price: payload?.price,
     totalSeats: payload?.totalSeats,
+    availableSeats: payload?.totalSeats,
   });
 
   return createdTickets;
+};
+
+const updateTicketService = async (user, payload) => {
+  if (!["superAdmin", "companyAdmin"]?.includes(user.role))
+    throw new Error("Restricted routes");
+
+  let updateObject = {};
+
+  if (!payload?.ticketConfigId)
+    throw new Error("Please provide TicketConfigId !");
+
+  const currentTicket = TicketConfigModel.findById(
+    payload?.ticketConfigId
+  ).populate("eventOwners venueId eventId");
+
+  if (
+    user?.role === "companyAdmin" &&
+    !currentTicket?.eventOwners?.includes(user?._id)
+  )
+    throw new Error("Update Your Ticket !");
+
+  if (payload?.type) updateObject.type = payload.type;
+
+  if (payload?.totalSeats) updateObject.totalSeats = payload.totalSeats;
+
+  if (payload?.price) updateObject.price = payload.price;
+
+  const updatedTickets = await TicketConfigModel.findByIdAndUpdate(
+    payload?.ticketConfigId,
+    { $set: updateObject },
+    { new: true }
+  );
+
+  return updatedTickets;
 };
 
 module.exports = {
   listUsers,
   listStates,
   addTicketService,
-  listVenue
+  listVenue,
+  updateTicketService
 };
