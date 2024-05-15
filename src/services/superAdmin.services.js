@@ -54,13 +54,15 @@ const listUsers = async (payload) => {
 };
 
 const listStates = async () => {
-  const states = await StateModel.find();
+  let criteria = {isDeleted: false};
+  const states = await StateModel.find(criteria);
   return states;
 };
 
 const listVenue = async (stateId) => {
   let critera = {};
   if (stateId) critera.state = stateId;
+  critera.isDeleted  = false ;
 
   const venues = await VenueModel.find(critera).populate("state");
   return venues;
