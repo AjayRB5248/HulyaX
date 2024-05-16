@@ -1,4 +1,3 @@
-const EventModel = require("../models/events.model");
 const StateModel = require("../models/states.model");
 const SubEventModel = require("../models/subEvents.model");
 const TicketConfigModel = require("../models/ticket-configs.model");
@@ -89,7 +88,7 @@ const addTicketService = async (user, payload) => {
 
   const assignedEvent = await SubEventModel.findById(payload?.eventId);
 
-  if (assignedEvent) throw new Error("Event must be registered !");
+  if (!assignedEvent) throw new Error("Event must be registered !");
 
   const currentTicket = await TicketConfigModel.findOne({
     eventId: payload.eventId,
@@ -112,6 +111,8 @@ const addTicketService = async (user, payload) => {
     totalSeats: payload?.totalSeats,
     availableSeats: payload?.totalSeats,
   });
+
+  await SubEventModel.findOneAndUpdate({_id:payload?.eventId},{$push:{ticketTypes:createdTickets?._id}})
 
   return createdTickets;
 };
@@ -186,9 +187,12 @@ const deleteTickets = async (user, payload) => {
   }
 
   if (!payload?.ticketConfigId) throw new Error("Enter ticket Id");
-  await TicketConfigModel.findByIdAndUpdate(payload?.ticketConfigId, {
+  const deletedTicket = await TicketConfigModel.findByIdAndUpdate(payload?.ticketConfigId, {
     $set: { isDeleted: true },
-  });
+  },{new:true});
+
+  await SubEventModel.findOneAndUpdate({_id:deletedTicket?.eventId},{$pull:{ticketTypes:deletedTicket?._id}})
+
   return true;
 };
 

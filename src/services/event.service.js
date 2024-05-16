@@ -8,6 +8,8 @@ const ArtistModel = require("../models/artist.model");
 const moment = require("moment");
 const { convertToUTC, convertFromUTC } = require("./timeZoneConverter.service");
 const { eventQueryGen } = require("./queryGenerator.services");
+const SubEventModel = require("../models/subEvents.model");
+const mongoose = require("mongoose");
 require("moment-timezone");
 
 const addEvent = async (payload, user) => {
@@ -38,13 +40,14 @@ const addEvent = async (payload, user) => {
       states,
     },
     { upsert: true, new: true }
-  ).populate("artists states").lean();
-  
+  )
+    .populate("artists states")
+    .lean();
+
   return saved;
 };
 
-const assignCompaniesToEvents = async (payload) => {
-};
+const assignCompaniesToEvents = async (payload) => {};
 
 const setupEventTickets = async (eventDoc, ticketSettings) => {
   const { _id: eventId, eventOwner } = eventDoc;
@@ -103,15 +106,22 @@ const listEvents = async (filterParams, requestUser) => {
   }
 
   if (filterParams) {
-    const { eventName, artist, states, city, eventDate, venueName, eventCategory } =
-      filterParams;
+    const {
+      eventName,
+      artist,
+      states,
+      city,
+      eventDate,
+      venueName,
+      eventCategory,
+    } = filterParams;
     if (eventCategory)
       criteria.eventCategory = { $regex: eventCategory, $options: "i" };
     if (eventName) criteria.eventName = { $regex: eventName, $options: "i" };
     if (artist) criteria.artist = { $in: [artist] };
     if (artist) criteria.artist = { $in: [artist] };
     if (states) criteria.states = { $in: [states] };
-    
+
     // if (eventDate) {
     //   const convertedEventDate = convertToUTC(eventDate, `Australia/${city}`);
     //   criteria.venues["$elemMatch"]["eventDate"] = {
@@ -314,8 +324,7 @@ const deleteEvent = async (eventId, user) => {
 };
 
 const getEvent = async (eventId) => {
-  const currentEvents = await EventsModel.findById(eventId)
-    .lean();
+  const currentEvents = await EventsModel.findById(eventId).lean();
   if (!currentEvents) throw new Error("Event not found");
   return { ...currentEvents, venues };
 };
@@ -477,6 +486,98 @@ const listArtists = async (filterQuery, user) => {
   return found;
 };
 
+const viewAssignedEvents = async (user, payload) => {
+
+  const { limit, page } = payload || {};
+
+  const perPage = limit ? parseInt(limit) : 20;
+  const pageNumber = page ? parseInt(page) : 1;
+  const skip = (pageNumber - 1) * perPage;
+
+  
+
+  const assignedTicketPipeLine = [
+    user?.role === "companyAdmin"
+      ? {
+          $match: {
+            companies: {
+              $in: [mongoose.Types.ObjectId(user?._id)],
+            },
+          },
+        }
+      : {},
+    { $sort: { createdAt: -1 } },
+    { $skip: skip }, // Pagination - skip
+    { $limit: perPage }, // Pagination - limit
+    {
+      $lookup: {
+        from: "events",
+        localField: "parentEvent",
+        foreignField: "_id",
+        as: "mainEvent",
+      },
+    },
+    {
+      $unwind: {
+        path: "$mainEvent",
+      },
+    },
+    {
+      $lookup: {
+        from: "artists",
+        localField: "mainEvent.artists",
+        foreignField: "_id",
+        as: "mainEvent.artistsData",
+      },
+    },
+
+    {
+      $lookup: {
+        from: "states",
+        localField: "state",
+        foreignField: "_id",
+        as: "currentState",
+      },
+    },
+
+    {
+      $unwind: {
+        path: "$currentState",
+      },
+    },
+
+    {
+      $lookup: {
+        from: "ticketconfigs",
+        localField: "ticketTypes",
+        foreignField: "_id",
+        as: "ticketConfigs",
+      },
+    },
+
+    {
+      $project: {
+        _id: 1,
+        eventName: "$mainEvent.eventName",
+        artists: "$mainEvent.artistsData",
+        eventCategory: "$mainEvent.eventCategory",
+        eventDescription: "$mainEvent.eventDescription",
+        images: "$mainEvent.images",
+        state: "$currentState",
+        ticketConfig: "$ticketConfigs",
+      },
+    },
+  ];
+
+  const assignedTicketPipeLineWithoutGarbage = assignedTicketPipeLine.filter(
+    (stage) => Object.keys(stage).length > 0
+  );
+
+  const AssignedEvents = await SubEventModel.aggregate(assignedTicketPipeLineWithoutGarbage);
+  
+  return AssignedEvents;
+};
+
 module.exports = {
   addEvent,
   setupEventTickets,
@@ -488,5 +589,6 @@ module.exports = {
   removeItemsFromEvent,
   listVenues,
   listArtists,
-  assignCompaniesToEvents
+  assignCompaniesToEvents,
+  viewAssignedEvents,
 };

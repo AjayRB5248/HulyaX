@@ -185,6 +185,12 @@ const getPossibleEventArtists = catchAsync(async (req, res) => {
   res.status(httpStatus.CREATED).send({ eventArtists });
 });
 
+const viewAssignedEvents = catchAsync(async (req, res) => {
+  const {user,body} = req;
+  const assignedEvents = await eventService.viewAssignedEvents(user,body);
+  res.status(httpStatus.CREATED).send({ assignedEvents });
+});
+
 module.exports = {
   addEvent,
   assignCompaniesToEvents,
@@ -198,5 +204,6 @@ module.exports = {
   getEventStatuses,
   getPossibleEventVenues,
   getPossibleEventArtists,
-  removeCompanyFromEvents
+  removeCompanyFromEvents,
+  viewAssignedEvents
 };

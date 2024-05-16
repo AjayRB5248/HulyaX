@@ -51,9 +51,19 @@ const getSingleEvents = {
     .unknown(),
 };
 
+const viewAssignedEvents = {
+  params: Joi.object()
+    .keys({
+        limit : Joi.number().optional(),
+        skip  : Joi.number().optional()
+    })
+    .unknown(),
+};
+
 module.exports = {
   createEvent,
   setupEventTickets,
   editEvent,
-  getSingleEvents
+  getSingleEvents,
+  viewAssignedEvents
 };

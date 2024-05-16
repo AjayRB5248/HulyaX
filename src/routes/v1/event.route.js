@@ -10,6 +10,11 @@ const {
 const { multerParser } = require("../../middlewares/multer");
 const { PERMISSION_CONSTANTS } = require("../../utility/constants");
 
+
+
+router.route("/view-assigned-events")
+.post(validate(eventValidation.viewAssignedEvents),eventController.viewAssignedEvents)
+
 // router
 //   .route("/add-new-event")
 //   .post(
