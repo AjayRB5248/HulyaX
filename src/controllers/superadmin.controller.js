@@ -303,6 +303,13 @@ const addTickets = catchAsync(async(req,res,next)=>{
 
 })
 
+const updateVenueSubEvent = catchAsync(async(req,res,next)=>{
+  const {user,body} = req || {};
+  const addedTickets = await superAdminServices.updateVenueSubEvent(user,body);
+  res.status(httpStatus.CREATED).send({ ticketConfig : addedTickets  });
+
+})
+
 
 const updateTicket = catchAsync(async(req,res,next)=>{
   const {user,body} = req || {};
@@ -342,5 +349,6 @@ module.exports = {
   addTickets,
   listVenue,
   updateTicket,
-  deleteTickets
+  deleteTickets,
+  updateVenueSubEvent
 };

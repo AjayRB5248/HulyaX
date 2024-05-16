@@ -192,6 +192,14 @@ router
 
 
   router
+  .route("/update-venue-subevent")   /// this route can be accessed by superadmin and approved company only
+  .post(
+    auth(),
+    superadminController.updateVenueSubEvent
+  );
+
+
+  router
   .route("/update-ticket")   /// this route can be accessed by superadmin and approved company only
   .post(
     auth(),
@@ -200,8 +208,7 @@ router
   .delete(
     auth(),
     superadminController.deleteTickets
-  )
-  ;
+  );
 
 
 

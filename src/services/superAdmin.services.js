@@ -151,6 +151,33 @@ const updateTicketService = async (user, payload) => {
 };
 
 
+
+const updateVenueSubEvent = async (user, payload) => {
+  if (!["superAdmin", "companyAdmin"]?.includes(user.role))
+    throw new Error("Restricted user");
+
+  const { subEventId, venues } = payload || {};
+
+  if (!subEventId || !venues) throw new Error("Invalid Payload");
+
+  const currentSubEvent = await SubEventModel.findById(subEventId);
+
+  if (
+    user.role === "companyAdmin" &&
+    !currentSubEvent?.companies?.includes(user?._id)
+  )
+    throw new Error("Update Your Own Event");
+
+  const updatedEvent = await SubEventModel.findByIdAndUpdate(
+    subEventId,
+    { $set: { venues } },
+    { new: true }
+  );
+
+  return updatedEvent;
+};
+
+
 const deleteTickets = async (user, payload) => {
 
   if (user.role === "companyAdmin"){
@@ -171,5 +198,6 @@ module.exports = {
   addTicketService,
   listVenue,
   updateTicketService,
-  deleteTickets
+  deleteTickets,
+  updateVenueSubEvent
 };
