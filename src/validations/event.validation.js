@@ -55,7 +55,7 @@ const viewAssignedEvents = {
   params: Joi.object()
     .keys({
         limit : Joi.number().optional(),
-        skip  : Joi.number().optional()
+        page  : Joi.number().optional()
     })
     .unknown(),
 };
