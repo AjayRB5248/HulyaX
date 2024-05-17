@@ -26,25 +26,24 @@ const addEvent = async (payload, user) => {
     states,
   } = payload;
 
-  const saved = await EventsModel.findOneAndUpdate(
-    { eventName },
-    {
-      status,
-      eventName,
-      eventDescription,
-      artists,
-      images,
-      tags,
-      eventCategory,
-      videoUrl,
-      states,
-    },
-    { upsert: true, new: true }
-  )
-    .populate("artists states")
-    .lean();
 
-  return saved;
+  const saved = await EventsModel.create({
+    eventName,
+
+    status,
+    eventName,
+    eventDescription,
+    artists,
+    images,
+    tags,
+    eventCategory,
+    videoUrl,
+    states,
+  });
+
+  const createdEvent = await EventsModel.findById(saved?._id).populate("states artists")
+
+  return createdEvent;
 };
 
 const assignCompaniesToEvents = async (payload) => {};

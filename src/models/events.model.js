@@ -63,7 +63,7 @@ const eventSchema = mongoose.Schema(
     ],
     slug: {
       type: String,
-      unique: true,
+      unique : true
     },
     images: [eventImageSchema],
     tags: [
@@ -115,7 +115,7 @@ eventSchema.pre("findOneAndUpdate", function (next) {
 // Validate that there is one and only one primary image
 eventSchema.path("images").validate(function (value) {
   const primaryImages = value.filter((image) => image.isPrimary);
-  return primaryImages.length === 1;
+  return primaryImages.length <=1;
 }, "One and only one image must be marked as primary");
 
 eventSchema.plugin(toJSON);
