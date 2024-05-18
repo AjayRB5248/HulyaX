@@ -100,6 +100,9 @@ const listEvents = async (user, body) => {
 
   const { eventName, artists, status, states, limit, page } = body;
 
+
+  if (user?.role === "companyAdmin") throw new Error("Not Accessible !");
+
   if (eventName) criteria.eventName = { $regex: eventName };
   if (artists) criteria.artists = { $in: artists };
   if (status) criteria.status = status;
@@ -107,6 +110,8 @@ const listEvents = async (user, body) => {
   const perPage = limit ? parseInt(limit) : 20;
   const pageNumber = page ? parseInt(page) : 1;
   const skip = (pageNumber - 1) * perPage;
+
+
 
 
   const eventPipelines = [

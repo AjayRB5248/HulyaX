@@ -149,7 +149,7 @@ router
 
 router
   .route("/fetch-all-events")
-  .post(superAdminCheck, eventController.listEvents);
+  .post(auth(), eventController.listEvents);
   router
   .route("/approve-company")
   .post(
