@@ -173,16 +173,22 @@ const getEvents = catchAsync(async (req, res) => {
 
 const getSubEvents = catchAsync(async (req, res) => {
   const { eventId } = req?.params || {};
+  let { limit, page } = req.query || {};
+
+  limit = limit ? parseInt(limit) : 20;
+  page = page ? parseInt(page) : 1;
+  const skip = (page - 1) * limit;
   const user = req.user;
   const criteria = {
-    parentEvent: eventId,
     companies: { $in: user._id },
   };
+  if(eventId !== 'all') criteria.parentEvent = eventId;
   if(user.role === 'superAdmin')  delete criteria.companies;
-  const subEvents = await SubEventModel.find(criteria).populate(
+  const totalSubEvents = await SubEventModel.find().countDocuments();
+  const subEvents = await SubEventModel.find(criteria).skip(skip).limit(limit).populate(
     "parentEvent venues.venueId state ticketTypes"
   );
-  res.status(httpStatus.CREATED).send({ subEvents });
+  res.status(httpStatus.CREATED).send({ total: totalSubEvents, subEvents });
 });
 
 const getEventStatuses = catchAsync(async (req, res) => {
