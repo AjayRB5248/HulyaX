@@ -178,12 +178,9 @@ const getSubEvents = catchAsync(async (req, res) => {
   limit = limit ? parseInt(limit) : 20;
   page = page ? parseInt(page) : 1;
   const skip = (page - 1) * limit;
-  const user = req.user;
-  const criteria = {
-    companies: { $in: user._id },
-  };
+  const criteria = {};
   if(eventId !== 'all') criteria.parentEvent = eventId;
-  if(user.role === 'superAdmin')  delete criteria.companies;
+  // if(user.role === 'superAdmin')  delete criteria.companies;
   const totalSubEvents = await SubEventModel.find().countDocuments();
   const subEvents = await SubEventModel.find(criteria).skip(skip).limit(limit).populate(
     "parentEvent venues.venueId state ticketTypes"
