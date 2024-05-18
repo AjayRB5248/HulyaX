@@ -665,22 +665,30 @@ const listArtists = async (filterQuery, user) => {
 };
 
 const viewAssignedEvents = async (user, payload) => {
-  const { limit, page } = payload || {};
+  const { limit, page,subEventId } = payload || {};
 
   const perPage = limit ? parseInt(limit) : 20;
   const pageNumber = page ? parseInt(page) : 1;
   const skip = (pageNumber - 1) * perPage;
 
+  let baseCriteria = {};
+
+
+
+  if (user?.role === "companyAdmin") {
+    baseCriteria.$match = {
+      companies: {
+        $in: [mongoose.Types.ObjectId(user?._id)],
+      },
+    };
+    if(subEventId) baseCriteria.$match._id = mongoose.Types.ObjectId(subEventId);
+  }
+
+  
+
+
   const assignedTicketPipeLine = [
-    user?.role === "companyAdmin"
-      ? {
-          $match: {
-            companies: {
-              $in: [mongoose.Types.ObjectId(user?._id)],
-            },
-          },
-        }
-      : {},
+    baseCriteria,
     { $sort: { createdAt: -1 } },
     { $skip: skip }, // Pagination - skip
     { $limit: perPage }, // Pagination - limit

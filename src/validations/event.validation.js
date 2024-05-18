@@ -55,7 +55,8 @@ const viewAssignedEvents = {
   params: Joi.object()
     .keys({
         limit : Joi.number().optional(),
-        page  : Joi.number().optional()
+        page  : Joi.number().optional(),
+        subEventId : Joi.string().optional(),
     })
     .unknown(),
 };
