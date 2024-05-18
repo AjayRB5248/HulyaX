@@ -22,6 +22,10 @@ const companyAssignedSchema = {
   companyId : {
     type : mongoose.Types.ObjectId,
     ref : "User"
+  },
+  subEventId : {
+    type : mongoose.Types.ObjectId,
+    ref : "SubEvents"
   }
 }
 

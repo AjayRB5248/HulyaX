@@ -58,6 +58,7 @@ const assignCompaniesToEvents = catchAsync(async (req, res) => {
         assignedCompany: {
           state: subEvents?.[0]?.state,
           companyId: subEvents?.[0]?.companies?.[0],
+          subEventId : inserted?.[0]?._id
         },
       },
     });
@@ -123,9 +124,8 @@ const setupEventTickets = catchAsync(async (req, res) => {
 });
 
 const listEvents = catchAsync(async (req, res) => {
-  const filterParams = req.query;
-  const requestUser = req.user;
-  const events = await eventService.listEvents(filterParams, requestUser);
+  const { user, query } = req;
+  const events = await eventService.listEvents(user,query);
   res.status(httpStatus.CREATED).send({ events });
 });
 

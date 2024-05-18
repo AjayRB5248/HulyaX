@@ -2,7 +2,8 @@ const mongoose = require("mongoose");
 const { EVENT_STATUS } = require("../utility/constants");
 
 const venueShema = {
-  _id: {
+  
+  venueId: {
     type: mongoose.Types.ObjectId,
     ref: "Venue",
   },
