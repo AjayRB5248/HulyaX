@@ -166,7 +166,8 @@ const deleteEvent = catchAsync(async (req, res) => {
 
 const getEvents = catchAsync(async (req, res) => {
   const { eventId } = req?.params || {};
-  const event = await eventService.getEvent(eventId);
+  const user = req.user;
+  const event = await eventService.getEvent(user,eventId);
   res.status(httpStatus.CREATED).send({ event });
 });
 

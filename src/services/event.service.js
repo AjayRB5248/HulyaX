@@ -494,10 +494,17 @@ const deleteEvent = async (eventId, user) => {
   return deletedEvent;
 };
 
-const getEvent = async (eventId) => {
-  const currentEvents = await EventsModel.findById(eventId).lean().populate('states artists');
+const getEvent = async (user, eventId) => {
+  const critera = {
+    _id: eventId,
+    assignedCompany: { $in : user?._id}
+  };
+  if(user.role === 'superAdmin') delete critera.assignedCompany;
+  const currentEvents = await EventsModel.findOne(critera)
+    .lean()
+    .populate("states artists");
   if (!currentEvents) throw new Error("Event not found");
-  return { ...currentEvents };
+  return { note: "this is parent event..venue and ticket details will be provided in fetch-subEvent-by-parent-event", ...currentEvents };
 };
 
 const addItemsToEvent = async (payload, user) => {
