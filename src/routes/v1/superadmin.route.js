@@ -150,7 +150,8 @@ router
 router
   .route("/fetch-all-events")
   .get(superAdminCheck, eventController.listEvents);
-  router
+
+router
   .route("/approve-company")
   .post(
     superAdminCheck,

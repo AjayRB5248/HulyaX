@@ -31,11 +31,11 @@ router.route("/view-assigned-events")
 //     eventController.setupEventTickets
 //   );
 
-// // this is public route
-// router.route("/fetch-events").get(
-//   auth(),
-//   eventController.listEvents
-// );
+// this is public route
+router.route("/fetch-events").get(
+  auth(),
+  eventController.listEvents
+);
 
 // router
 //   .route("/edit/:eventId")

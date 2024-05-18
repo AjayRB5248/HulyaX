@@ -10,6 +10,7 @@ const { convertToUTC, convertFromUTC } = require("./timeZoneConverter.service");
 const { eventQueryGen } = require("./queryGenerator.services");
 const SubEventModel = require("../models/subEvents.model");
 const mongoose = require("mongoose");
+const EventModel = require("../models/events.model");
 require("moment-timezone");
 
 const addEvent = async (payload, user) => {
@@ -105,58 +106,62 @@ const listEvents = async (filterParams, requestUser) => {
   }
 
   if (filterParams) {
-    const {
-      eventName,
-      artist,
-      states,
-      city,
-      eventDate,
-      venueName,
-      eventCategory,
-    } = filterParams;
+    const { eventName, artist, states, eventCategory, eventDate } =
+      filterParams;
+    if (eventName) criteria.eventName = { $regex: eventName, $options: "i" };
     if (eventCategory)
       criteria.eventCategory = { $regex: eventCategory, $options: "i" };
-    if (eventName) criteria.eventName = { $regex: eventName, $options: "i" };
-    if (artist) criteria.artist = { $in: [artist] };
-    if (artist) criteria.artist = { $in: [artist] };
-    if (states) criteria.states = { $in: [states] };
 
-    // if (eventDate) {
-    //   const convertedEventDate = convertToUTC(eventDate, `Australia/${city}`);
-    //   criteria.venues["$elemMatch"]["eventDate"] = {
-    //     $gte: new Date(convertedEventDate.startOf("day").toISOString()),
-    //     $lte: new Date(convertedEventDate.endOf("day").toISOString()),
-    //   };
-    // }
+    if (artist) {
+      const artistData = await ArtistModel.find({
+        artistName: { $regex: "artist" },
+      });
+      if (artistData) {
+        criteria.artists = { $in: artistData.map((a) => a._id) };
+      }
+    }
 
-    // if (city || venueName) {
-    //   const venueCriteria = {};
-    //   if (city) venueCriteria.city = { $regex: city, $options: "i" };
-    //   if (venueName)
-    //     venueCriteria.venueName = { $regex: venueName, $options: "i" };
-    //   let venues = await VenueModel.find(venueCriteria).select("_id");
-    //   if (!venues?.length) throw new Error("EVENTS NOT FOUND");
-    //   venues = venues.map((v) => v._id);
-    //   criteria["venues._id"] = { $in: venues };
-    // }
+    if (states) {
+      const stateData = await StateModel.find({
+        stateName: { $regex: "states" },
+      });
+      if (stateData) {
+        criteria.states = { $in: stateData.map((a) => a._id) };
+      }
+    }
 
-    // if (artist) {
-    //   const artistCriteria = {};
-    //   if (artist) artistCriteria.artistName = { $regex: artist, $options: "i" };
-    //   let artistIds = await ArtistModel.find(artistCriteria).select("_id");
-    //   if (!artistIds?.length) throw new Error("EVENTS NOT FOUND");
-    //   artistIds = artistIds.map((a) => a._id);
-    //   criteria.artists = { $in: artistIds };
-    // }
+    if (eventDate) {
+      const startDate = moment(eventDate).startOf("day").toISOString();
+      const endDate = moment(eventDate).endOf("day").toISOString();
+      const subEvents = await SubEventModel.find({
+        "venues.eventDate": { $gte: startDate, $lte: endDate },
+      });
+
+      if (subEvents?.length) {
+        const parentEventIds = subEvents.map((se) => se.parentEvent);
+        criteria._id = { $in: parentEventIds };
+      }
+    }
   }
-
-  const dbEvent = await EventsModel.find(criteria)
-    .populate("states artists")
+  const dbEvent = await EventModel.find(criteria)
+    .populate([
+      {
+        path: "states",
+      },
+      {
+        path: "venues.venueId",
+      },
+      {
+        path: "artists",
+      },
+    ])
+    .sort({ createdAt: -1 })
     .lean();
 
   return dbEvent;
 };
 
+ 
 const editEvent = async (payload, user) => {
   const criteria = {
     _id: payload.eventId,
