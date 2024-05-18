@@ -149,8 +149,9 @@ router
 
 router
   .route("/fetch-all-events")
-  .post(eventController.listEvents);
-  router
+  .get(superAdminCheck, eventController.listEvents);
+
+router
   .route("/approve-company")
   .post(
     superAdminCheck,

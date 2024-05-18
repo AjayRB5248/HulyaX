@@ -95,24 +95,62 @@ const setupEventTickets = async (eventDoc, ticketSettings) => {
   return events;
 };
 
-const listEvents = async (user, body) => {
+const listEvents = async (user, filterParams) => {
   let criteria = {};
+  if (filterParams) {
+    const { eventName, artist, states, eventCategory, eventDate } =
+      filterParams;
+    if (eventName) criteria.eventName = { $regex: eventName, $options: "i" };
+    if (eventCategory)
+      criteria.eventCategory = { $regex: eventCategory, $options: "i" };
 
-  const { eventName, artists, status, states, limit, page } = body;
+    if (artist) {
+      const artistData = await ArtistModel.find({
+        artistName: { $regex: "artist" },
+      });
+      if (artistData) {
+        criteria.artists = { $in: artistData.map((a) => a._id) };
+      }
+    }
 
+    if (states) {
+      const stateData = await StateModel.find({
+        stateName: { $regex: "states" },
+      });
+      if (stateData) {
+        criteria.states = { $in: stateData.map((a) => a._id) };
+      }
+    }
 
-  if (user?.role === "companyAdmin") throw new Error("Not Accessible !");
+    if (eventDate) {
+      const startDate = moment(eventDate).startOf("day").toISOString();
+      const endDate = moment(eventDate).endOf("day").toISOString();
+      const subEvents = await SubEventModel.find({
+        "venues.eventDate": { $gte: startDate, $lte: endDate },
+      });
 
-  if (eventName) criteria.eventName = { $regex: eventName };
-  if (artists) criteria.artists = { $in: artists };
-  if (status) criteria.status = status;
-  if (states) criteria.states = states;
-  const perPage = limit ? parseInt(limit) : 20;
-  const pageNumber = page ? parseInt(page) : 1;
-  const skip = (pageNumber - 1) * perPage;
+      if (subEvents?.length) {
+        const parentEventIds = subEvents.map((se) => se.parentEvent);
+        criteria._id = { $in: parentEventIds };
+      }
+    }
+  }
+  const dbEvent = await EventModel.find(criteria)
+    .populate([
+      {
+        path: "states",
+      },
+      {
+        path: "venues.venueId",
+      },
+      {
+        path: "artists",
+      },
+    ])
+    .sort({ createdAt: -1 })
+    .lean();
 
-
-
+  return dbEvent;
 
   const eventPipelines = [
     {
@@ -288,9 +326,9 @@ const listEvents = async (user, body) => {
   //   .populate("states artists")
   //   .lean();
 
-  // return dbEvent;
 };
 
+ 
 const editEvent = async (payload, user) => {
   const criteria = {
     _id: payload.eventId,
@@ -457,9 +495,9 @@ const deleteEvent = async (eventId, user) => {
 };
 
 const getEvent = async (eventId) => {
-  const currentEvents = await EventsModel.findById(eventId).lean();
+  const currentEvents = await EventsModel.findById(eventId).lean().populate('states artists');
   if (!currentEvents) throw new Error("Event not found");
-  return { ...currentEvents, venues };
+  return { ...currentEvents };
 };
 
 const addItemsToEvent = async (payload, user) => {

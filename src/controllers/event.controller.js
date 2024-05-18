@@ -35,13 +35,13 @@ const assignCompaniesToEvents = catchAsync(async (req, res) => {
     };
   }).filter(Boolean);
 
-
-  const currentEvents = await SubEventModel.find({parentEvent:parentEvent});
+  const currentEvents = await SubEventModel.find({ parentEvent: parentEvent });
   let toInserEvents = [];
   subEvents?.forEach(p=>{
     const isFound = currentEvents?.find((event)=>event?.state+""===p?.state+"" && event?.companies?.[0]+""===p?.companies?.[0]+"");
-    const isAssignedToAnotherCompany = currentEvents?.find(event=>event?.state+""===p?.state+"" && event?.companies?.[0]);
-
+    const isAssignedToAnotherCompany = currentEvents?.find(
+      (event) => event?.state + "" === p?.state + "" && event?.companies?.[0]
+    );
     if(!isFound && !isAssignedToAnotherCompany) toInserEvents.push(p);
   })
 
@@ -124,8 +124,8 @@ const setupEventTickets = catchAsync(async (req, res) => {
 });
 
 const listEvents = catchAsync(async (req, res) => {
-  const {user,body} = req;
-  const events = await eventService.listEvents(user,body);
+  const { user, query } = req;
+  const events = await eventService.listEvents(user,query);
   res.status(httpStatus.CREATED).send({ events });
 });
 
