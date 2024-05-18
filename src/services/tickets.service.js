@@ -11,6 +11,7 @@ const PDFDocument = require("pdfkit");
 
 const request = require("request");
 const { uploadToS3Bucket } = require("./s3/s3Service");
+const SubEventModel = require("../models/subEvents.model");
 
 const purchaseTicket = async (payload, user) => {
   const { eventId, tickets } = payload; // receive other payment related keys from payload
@@ -58,18 +59,85 @@ const purchaseTicket = async (payload, user) => {
 };
 
 const viewTickets = async (payload, user) => {
-  const { eventId, venueName } = payload;
-  const currentEvents = await EventModel.findById(eventId).lean();
-  if (!currentEvents) throw new Error("Event not found");
-  const venueId = currentEvents?.venues?.find(
-    (venue) => venue?.venueName + "" === venueName + ""
-  )?._id;
-  if (!venueId) throw new Error("Venue not found");
-  const ticketCollections = await TicketConfigs.find({
-    venueId,
-    eventId,
-  }).lean();
-  return ticketCollections;
+  const { eventId, state } = payload || {};
+
+  const viewTicketPipieline = [
+    {
+      $match: {
+        parentEvent: mongoose.Types.ObjectId(eventId),
+        state: mongoose.Types.ObjectId(state),
+      },
+    },
+    {
+      $lookup: {
+        from: "venues",
+        localField: "venues.venueId",
+        foreignField: "_id",
+        as: "venueData",
+      },
+    },
+    {
+      $lookup: {
+        from: "states",
+        localField: "state",
+        foreignField: "_id",
+        as: "state",
+      },
+    },
+    {
+      $unwind: {
+        path: "$state",
+      },
+    },
+    {
+      $lookup: {
+        from: "ticketconfigs",
+        localField: "ticketTypes",
+        foreignField: "_id",
+        as: "ticketTypes",
+      },
+    },
+  ];
+
+  let eventTickets = await SubEventModel.aggregate(viewTicketPipieline);
+
+  eventTickets = eventTickets?.map((ticket) => {
+    let ticketType = ticket?.ticketTypes;
+    const ticketVenues = ticket?.venues;
+    const allVenues = ticket?.venueData;
+
+    ticketType = ticketType?.map((eachTicket) => {
+      const venueInfoId = eachTicket?.venueInfo;
+      const currentVenue = ticketVenues?.find(
+        (p) => p?._id + "" === venueInfoId + ""
+      );
+
+      const eventDate = currentVenue?.eventDate;
+      const venueInfo = allVenues?.find(
+        (p) => p?._id + "" === currentVenue?.venueId + ""
+      );
+      return {
+        price: eachTicket?.price,
+        availableSeats: eachTicket?.availableSeats,
+        totalSeats: eachTicket?.totalSeats,
+        type: eachTicket?.type,
+        eventDate,
+        venueName: venueInfo?.venueName,
+        venueId: venueInfo?._id,
+      };
+    });
+
+    return {
+      Tickets: ticketType,
+    };
+  });
+
+
+
+  const tickets = eventTickets?.[0]?.Tickets || [];
+
+  return tickets;
+
 };
 
 const handleTicketPurchase = async (ticketPayload) => {
