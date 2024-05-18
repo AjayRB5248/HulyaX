@@ -13,7 +13,7 @@ const { PERMISSION_CONSTANTS } = require("../../utility/constants");
 
 
 router.route("/view-assigned-events")
-.post(validate(eventValidation.viewAssignedEvents),eventController.viewAssignedEvents)
+.post(auth(),validate(eventValidation.viewAssignedEvents),eventController.viewAssignedEvents)
 
 // router
 //   .route("/add-new-event")
