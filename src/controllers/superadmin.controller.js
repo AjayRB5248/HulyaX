@@ -291,7 +291,7 @@ const listState = catchAsync(async (req, res) => {
 
 const listVenue = catchAsync(async (req, res) => {
   const {state : stateId} = req?.body || {};
-  if(!['companyAdmin','companyUser'].includes(req?.user?.role)) throw new Error(`Invalid role to access this api`);
+  if(!['companyAdmin','superAdmin'].includes(req?.user?.role)) throw new Error(`Invalid role to access this api`);
   const venues = await superAdminServices.listVenue(stateId);
   res.status(httpStatus.CREATED).send({ venues : Array.isArray(venues) ? venues : [] ,count : venues?.length || 0 });
 });
