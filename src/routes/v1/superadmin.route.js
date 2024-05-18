@@ -149,7 +149,7 @@ router
 
 router
   .route("/fetch-all-events")
-  .post(auth(), eventController.listEvents);
+  .post(eventController.listEvents);
   router
   .route("/approve-company")
   .post(

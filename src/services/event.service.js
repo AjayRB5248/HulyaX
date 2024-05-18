@@ -122,92 +122,111 @@ const listEvents = async (user, body) => {
     { $skip: skip },
     { $limit: perPage },
     {
-      $lookup: {
-        from: "subevents",
-        localField: "assignedCompany.subEventId",
-        foreignField: "_id",
-        as: "childEvents",
-      },
+      $lookup :{
+        from : "artists",
+        localField : "artists",
+        foreignField :"_id",
+        as : "artists"
+      }
     },
     {
-      $lookup: {
-        from: "ticketconfigs",
-        localField: "childEvents.ticketTypes",
-        foreignField: "_id",
-        as: "allTickets",
-      },
-    },
-    {
-      $lookup: {
-        from: "venues",
-        localField: "childEvents.venues.venueId",
-        foreignField: "_id",
-        as: "venueData",
-      },
-    },
-    {
-      $lookup: {
-        from: "states",
-        localField: "states",
-        foreignField: "_id",
-        as: "stateData",
-      },
-    },
+      $lookup : {
+        from : "states",
+        localField : "states",
+        foreignField :"_id",
+        as : "states"
+      }
+    }
+    // {
+    //   $lookup: {
+    //     from: "subevents",
+    //     localField: "assignedCompany.subEventId",
+    //     foreignField: "_id",
+    //     as: "childEvents",
+    //   },
+    // },
+    // {
+    //   $lookup: {
+    //     from: "ticketconfigs",
+    //     localField: "childEvents.ticketTypes",
+    //     foreignField: "_id",
+    //     as: "allTickets",
+    //   },
+    // },
+    // {
+    //   $lookup: {
+    //     from: "venues",
+    //     localField: "childEvents.venues.venueId",
+    //     foreignField: "_id",
+    //     as: "venueData",
+    //   },
+    // },
+    // {
+    //   $lookup: {
+    //     from: "states",
+    //     localField: "states",
+    //     foreignField: "_id",
+    //     as: "stateData",
+    //   },
+    // },
   ];
 
   let allEvents = await EventModel.aggregate(eventPipelines);
-  allEvents = allEvents?.map((event) => {
-    const assignedCompany = event?.assignedCompany;
-    const childEvents = event?.childEvents;
-    const stateData = event?.stateData;
-    const allTickets = event?.allTickets;
-    const venueData = event?.venueData;
 
-    const ticketWithVenueAndTime = allTickets?.map((ticket) => {
-      const currentSubEvents = childEvents?.find(
-        (event) => event?._id + "" === ticket?.eventId + ""
-      );
-      const venueWithTime = currentSubEvents?.venues;
-      const matchedVenue = venueWithTime?.find(
-        (p) => p?._id + "" === ticket?.venueInfo + ""
-      );
-      const currentVenues = venueData?.find(
-        (venue) => venue?._id + "" === matchedVenue?.venueId + ""
-      );
-      const currentState = stateData?.find(
-        (state) => state?._id + "" === currentVenues?.state + ""
-      );
+  return allEvents;
+
+  // allEvents = allEvents?.map((event) => {
+  //   const assignedCompany = event?.assignedCompany;
+  //   const childEvents = event?.childEvents;
+  //   const stateData = event?.stateData;
+  //   const allTickets = event?.allTickets;
+  //   const venueData = event?.venueData;
+
+  //   const ticketWithVenueAndTime = allTickets?.map((ticket) => {
+  //     const currentSubEvents = childEvents?.find(
+  //       (event) => event?._id + "" === ticket?.eventId + ""
+  //     );
+  //     const venueWithTime = currentSubEvents?.venues;
+  //     const matchedVenue = venueWithTime?.find(
+  //       (p) => p?._id + "" === ticket?.venueInfo + ""
+  //     );
+  //     const currentVenues = venueData?.find(
+  //       (venue) => venue?._id + "" === matchedVenue?.venueId + ""
+  //     );
+  //     const currentState = stateData?.find(
+  //       (state) => state?._id + "" === currentVenues?.state + ""
+  //     );
 
       
 
-      return {
-        venueName: currentVenues?.venueName,
-        venueId: currentVenues?._id,
-        stateName: currentState?.stateName,
-        stateId: currentState?._id,
-        ticketId: ticket?._id,
-        ticketType: ticket?.type,
-        price: ticket?.price,
-        totalSeats: ticket?.totalSeats,
-        availableSeats: ticket?.availableSeats,
-        eventDate : matchedVenue?.eventDate
-      };
-    });
+  //     return {
+  //       venueName: currentVenues?.venueName,
+  //       venueId: currentVenues?._id,
+  //       stateName: currentState?.stateName,
+  //       stateId: currentState?._id,
+  //       ticketId: ticket?._id,
+  //       ticketType: ticket?.type,
+  //       price: ticket?.price,
+  //       totalSeats: ticket?.totalSeats,
+  //       availableSeats: ticket?.availableSeats,
+  //       eventDate : matchedVenue?.eventDate
+  //     };
+  //   });
 
 
 
 
-    return {
-      _id: event._id,
-      status: event.status,
-      eventName: event?.eventName,
-      eventDescription: event?.eventDescription,
-      images: event?.images,
-      slug: event?.slug,
-      supportedStates: stateData || [],
-      ticketData: ticketWithVenueAndTime,
-    };
-  });
+  //   return {
+  //     _id: event._id,
+  //     status: event.status,
+  //     eventName: event?.eventName,
+  //     eventDescription: event?.eventDescription,
+  //     images: event?.images,
+  //     slug: event?.slug,
+  //     supportedStates: stateData || [],
+  //     ticketData: ticketWithVenueAndTime,
+  //   };
+  // });
 
 
   return allEvents;
