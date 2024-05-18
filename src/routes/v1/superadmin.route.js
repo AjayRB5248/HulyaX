@@ -178,8 +178,8 @@ router
   router
   .route("/list-venue")
   .post(
-    superAdminCheck,
-    validate(listVenue),
+    // superAdminCheck,
+    // validate(listVenue),
     superadminController.listVenue
   );
 

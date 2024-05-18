@@ -71,7 +71,7 @@ router
   router
   .route("/fetch-subEvent-by-parent-event/:eventId")
   .get(
-    auth(),
+    // auth(),
     eventController.getSubEvents
   );
 
