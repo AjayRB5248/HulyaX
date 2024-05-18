@@ -70,7 +70,7 @@ const listVenue = async (stateId) => {
 const addTicketService = async (user, payload) => {
   if (!payload?.eventId) throw new Error(`Event Id is required`);
 
-  if (!payload?.venueId) throw new Error(`Venue Id is required`);
+  if (!payload?.venueInfo) throw new Error(`Venue Id is required`);
 
   if (!payload?.type) throw new Error(`Ticket Type is required`);
 
@@ -93,7 +93,7 @@ const addTicketService = async (user, payload) => {
   const currentTicket = await TicketConfigModel.findOne({
     eventId: payload.eventId,
     type: payload.type,
-    venueId: payload.venueId,
+    venueInfo: payload.venueInfo,
     isDeleted: false,
   });
 
@@ -104,7 +104,7 @@ const addTicketService = async (user, payload) => {
 
   const createdTickets = await TicketConfigModel.create({
     eventId: payload?.eventId,
-    venueId: payload?.venueId,
+    venueInfo: payload?.venueInfo,
     eventOwners: [eventOwners],
     type: payload?.type,
     price: payload?.price,
@@ -154,8 +154,8 @@ const updateTicketService = async (user, payload) => {
 
 
 const updateVenueSubEvent = async (user, payload) => {
-  if (!["superAdmin", "companyAdmin"]?.includes(user.role))
-    throw new Error("Restricted user");
+  // if (!["superAdmin", "companyAdmin"]?.includes(user.role))
+  //   throw new Error("Restricted user");
 
   const { subEventId, venues } = payload || {};
 

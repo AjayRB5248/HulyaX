@@ -10,6 +10,7 @@ const { convertToUTC, convertFromUTC } = require("./timeZoneConverter.service");
 const { eventQueryGen } = require("./queryGenerator.services");
 const SubEventModel = require("../models/subEvents.model");
 const mongoose = require("mongoose");
+const EventModel = require("../models/events.model");
 require("moment-timezone");
 
 const addEvent = async (payload, user) => {
@@ -26,7 +27,6 @@ const addEvent = async (payload, user) => {
     states,
   } = payload;
 
-
   const saved = await EventsModel.create({
     eventName,
 
@@ -41,7 +41,9 @@ const addEvent = async (payload, user) => {
     states,
   });
 
-  const createdEvent = await EventsModel.findById(saved?._id).populate("states artists")
+  const createdEvent = await EventsModel.findById(saved?._id).populate(
+    "states artists"
+  );
 
   return createdEvent;
 };
@@ -93,68 +95,176 @@ const setupEventTickets = async (eventDoc, ticketSettings) => {
   return events;
 };
 
-const listEvents = async (filterParams, requestUser) => {
+const listEvents = async (user, body) => {
   let criteria = {};
 
-  if (requestUser?.role === "customer") {
-    criteria.isDeleted = { $ne: true };
-  }
-  // one admin should only be able to list their events - todo : put this condition elsewhere
-  if (requestUser?.role === "companyAdmin") {
-    criteria.eventOwner = requestUser._id;
-  }
+  const { eventName, artists, status, states, limit, page } = body;
 
-  if (filterParams) {
-    const {
-      eventName,
-      artist,
-      states,
-      city,
-      eventDate,
-      venueName,
-      eventCategory,
-    } = filterParams;
-    if (eventCategory)
-      criteria.eventCategory = { $regex: eventCategory, $options: "i" };
-    if (eventName) criteria.eventName = { $regex: eventName, $options: "i" };
-    if (artist) criteria.artist = { $in: [artist] };
-    if (artist) criteria.artist = { $in: [artist] };
-    if (states) criteria.states = { $in: [states] };
+  if (eventName) criteria.eventName = { $regex: eventName };
+  if (artists) criteria.artists = { $in: artists };
+  if (status) criteria.status = status;
+  if (states) criteria.states = states;
+  const perPage = limit ? parseInt(limit) : 20;
+  const pageNumber = page ? parseInt(page) : 1;
+  const skip = (pageNumber - 1) * perPage;
 
-    // if (eventDate) {
-    //   const convertedEventDate = convertToUTC(eventDate, `Australia/${city}`);
-    //   criteria.venues["$elemMatch"]["eventDate"] = {
-    //     $gte: new Date(convertedEventDate.startOf("day").toISOString()),
-    //     $lte: new Date(convertedEventDate.endOf("day").toISOString()),
-    //   };
-    // }
 
-    // if (city || venueName) {
-    //   const venueCriteria = {};
-    //   if (city) venueCriteria.city = { $regex: city, $options: "i" };
-    //   if (venueName)
-    //     venueCriteria.venueName = { $regex: venueName, $options: "i" };
-    //   let venues = await VenueModel.find(venueCriteria).select("_id");
-    //   if (!venues?.length) throw new Error("EVENTS NOT FOUND");
-    //   venues = venues.map((v) => v._id);
-    //   criteria["venues._id"] = { $in: venues };
-    // }
+  const eventPipelines = [
+    {
+      $match: criteria,
+    },
+    { $sort: { createdAt: -1 } },
+    { $skip: skip },
+    { $limit: perPage },
+    {
+      $lookup: {
+        from: "subevents",
+        localField: "assignedCompany.subEventId",
+        foreignField: "_id",
+        as: "childEvents",
+      },
+    },
+    {
+      $lookup: {
+        from: "ticketconfigs",
+        localField: "childEvents.ticketTypes",
+        foreignField: "_id",
+        as: "allTickets",
+      },
+    },
+    {
+      $lookup: {
+        from: "venues",
+        localField: "childEvents.venues.venueId",
+        foreignField: "_id",
+        as: "venueData",
+      },
+    },
+    {
+      $lookup: {
+        from: "states",
+        localField: "states",
+        foreignField: "_id",
+        as: "stateData",
+      },
+    },
+  ];
 
-    // if (artist) {
-    //   const artistCriteria = {};
-    //   if (artist) artistCriteria.artistName = { $regex: artist, $options: "i" };
-    //   let artistIds = await ArtistModel.find(artistCriteria).select("_id");
-    //   if (!artistIds?.length) throw new Error("EVENTS NOT FOUND");
-    //   artistIds = artistIds.map((a) => a._id);
-    //   criteria.artists = { $in: artistIds };
-    // }
-  }
+  let allEvents = await EventModel.aggregate(eventPipelines);
+  allEvents = allEvents?.map((event) => {
+    const assignedCompany = event?.assignedCompany;
+    const childEvents = event?.childEvents;
+    const stateData = event?.stateData;
+    const allTickets = event?.allTickets;
+    const venueData = event?.venueData;
 
-  const dbEvent = await EventsModel.find(criteria)
-    .populate("states artists")
-    .lean();
+    const ticketWithVenueAndTime = allTickets?.map((ticket) => {
+      const currentSubEvents = childEvents?.find(
+        (event) => event?._id + "" === ticket?.eventId + ""
+      );
+      const venueWithTime = currentSubEvents?.venues;
+      const matchedVenue = venueWithTime?.find(
+        (p) => p?._id + "" === ticket?.venueInfo + ""
+      );
+      const currentVenues = venueData?.find(
+        (venue) => venue?._id + "" === matchedVenue?.venueId + ""
+      );
+      const currentState = stateData?.find(
+        (state) => state?._id + "" === currentVenues?.state + ""
+      );
 
-  return dbEvent;
+      
+
+      return {
+        venueName: currentVenues?.venueName,
+        venueId: currentVenues?._id,
+        stateName: currentState?.stateName,
+        stateId: currentState?._id,
+        ticketId: ticket?._id,
+        ticketType: ticket?.type,
+        price: ticket?.price,
+        totalSeats: ticket?.totalSeats,
+        availableSeats: ticket?.availableSeats,
+        eventDate : matchedVenue?.eventDate
+      };
+    });
+
+
+
+
+    return {
+      _id: event._id,
+      status: event.status,
+      eventName: event?.eventName,
+      eventDescription: event?.eventDescription,
+      images: event?.images,
+      slug: event?.slug,
+      supportedStates: stateData || [],
+      ticketData: ticketWithVenueAndTime,
+    };
+  });
+
+
+  return allEvents;
+  // allEvents =
+
+  // if (user?.role === "customer") {
+  //   criteria.isDeleted = { $ne: true };
+  // }
+  // // one admin should only be able to list their events - todo : put this condition elsewhere
+  // if (requestUser?.role === "companyAdmin") {
+  //   criteria.eventOwner = requestUser._id;
+  // }
+
+  // if (filterParams) {
+  //   const {
+  //     eventName,
+  //     artist,
+  //     states,
+  //     venueName,
+  //     eventCategory,
+  //   } = filterParams;
+  //   if (eventCategory)
+  //     criteria.eventCategory = { $regex: eventCategory, $options: "i" };
+  //   if (eventName) criteria.eventName = { $regex: eventName, $options: "i" };
+  //   if (artist) criteria.artist = { $in: [artist] };
+  //   if (artist) criteria.artist = { $in: [artist] };
+  //   if (states) criteria.states = { $in: [states] };
+
+  //   // if (eventDate) {
+  //   //   const convertedEventDate = convertToUTC(eventDate, `Australia/${city}`);
+  //   //   criteria.venues["$elemMatch"]["eventDate"] = {
+  //   //     $gte: new Date(convertedEventDate.startOf("day").toISOString()),
+  //   //     $lte: new Date(convertedEventDate.endOf("day").toISOString()),
+  //   //   };
+  //   // }
+
+  //   // if (city || venueName) {
+  //   //   const venueCriteria = {};
+  //   //   if (city) venueCriteria.city = { $regex: city, $options: "i" };
+  //   //   if (venueName)
+  //   //     venueCriteria.venueName = { $regex: venueName, $options: "i" };
+  //   //   let venues = await VenueModel.find(venueCriteria).select("_id");
+  //   //   if (!venues?.length) throw new Error("EVENTS NOT FOUND");
+  //   //   venues = venues.map((v) => v._id);
+  //   //   criteria["venues._id"] = { $in: venues };
+  //   // }
+
+  //   // if (artist) {
+  //   //   const artistCriteria = {};
+  //   //   if (artist) artistCriteria.artistName = { $regex: artist, $options: "i" };
+  //   //   let artistIds = await ArtistModel.find(artistCriteria).select("_id");
+  //   //   if (!artistIds?.length) throw new Error("EVENTS NOT FOUND");
+  //   //   artistIds = artistIds.map((a) => a._id);
+  //   //   criteria.artists = { $in: artistIds };
+  //   // }
+  // }
+
+  // const dbEvent = await EventsModel.find(criteria)
+  //   .populate("states artists")
+  //   .lean();
+
+  // return dbEvent;
 };
 
 const editEvent = async (payload, user) => {
@@ -486,14 +596,11 @@ const listArtists = async (filterQuery, user) => {
 };
 
 const viewAssignedEvents = async (user, payload) => {
-
   const { limit, page } = payload || {};
 
   const perPage = limit ? parseInt(limit) : 20;
   const pageNumber = page ? parseInt(page) : 1;
   const skip = (pageNumber - 1) * perPage;
-
-  
 
   const assignedTicketPipeLine = [
     user?.role === "companyAdmin"
@@ -572,8 +679,10 @@ const viewAssignedEvents = async (user, payload) => {
     (stage) => Object.keys(stage).length > 0
   );
 
-  const AssignedEvents = await SubEventModel.aggregate(assignedTicketPipeLineWithoutGarbage);
-  
+  const AssignedEvents = await SubEventModel.aggregate(
+    assignedTicketPipeLineWithoutGarbage
+  );
+
   return AssignedEvents;
 };
 
