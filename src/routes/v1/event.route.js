@@ -68,6 +68,13 @@ router
     eventController.getEvents
   );
 
+  router
+  .route("/fetch-subEvent-by-parent-event/:eventId")
+  .get(
+    auth(),
+    eventController.getSubEvents
+  );
+
 // router.route("/event-status-list").get(
 //   // auth(PERMISSION_CONSTANTS.LIST_EVENTS),
 //   eventController.getEventStatuses

@@ -166,8 +166,23 @@ const deleteEvent = catchAsync(async (req, res) => {
 
 const getEvents = catchAsync(async (req, res) => {
   const { eventId } = req?.params || {};
-  const event = await eventService.getEvent(eventId);
+  const user = req.user;
+  const event = await eventService.getEvent(user,eventId);
   res.status(httpStatus.CREATED).send({ event });
+});
+
+const getSubEvents = catchAsync(async (req, res) => {
+  const { eventId } = req?.params || {};
+  const user = req.user;
+  const criteria = {
+    parentEvent: eventId,
+    companies: { $in: user._id },
+  };
+  if(user.role === 'superAdmin')  delete criteria.companies;
+  const subEvents = await SubEventModel.find(criteria).populate(
+    "parentEvent venues.venueId state ticketTypes"
+  );
+  res.status(httpStatus.CREATED).send({ subEvents });
 });
 
 const getEventStatuses = catchAsync(async (req, res) => {
@@ -205,5 +220,6 @@ module.exports = {
   getPossibleEventVenues,
   getPossibleEventArtists,
   removeCompanyFromEvents,
-  viewAssignedEvents
+  viewAssignedEvents,
+  getSubEvents
 };
