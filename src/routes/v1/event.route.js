@@ -61,13 +61,12 @@ router.route("/fetch-events").get(
 //     eventController.removeItemsFromEvent
 //   );
 
-// router
-//   .route("/:eventId")
-//   .get(
-//     auth(PERMISSION_CONSTANTS.LIST_EVENTS),
-//     validate(eventValidation.getSingleEvents),
-//     eventController.getEvents
-//   );
+router
+  .route("/:eventId")
+  .get(
+    auth(),
+    eventController.getEvents
+  );
 
 // router.route("/event-status-list").get(
 //   // auth(PERMISSION_CONSTANTS.LIST_EVENTS),

@@ -328,9 +328,9 @@ const deleteEvent = async (eventId, user) => {
 };
 
 const getEvent = async (eventId) => {
-  const currentEvents = await EventsModel.findById(eventId).lean();
+  const currentEvents = await EventsModel.findById(eventId).lean().populate('states artists');
   if (!currentEvents) throw new Error("Event not found");
-  return { ...currentEvents, venues };
+  return { ...currentEvents };
 };
 
 const addItemsToEvent = async (payload, user) => {

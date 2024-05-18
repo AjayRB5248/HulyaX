@@ -10,8 +10,8 @@ const router = express.Router();
 
 router.post(
   "/view-tickets",
-  // validate(ticketValidation.viewTickets),
-  auth(),
+  validate(ticketValidation.viewTickets),
+  // auth(),
   ticketController.viewTickets
 );
 
