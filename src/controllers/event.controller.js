@@ -183,7 +183,24 @@ const getSubEvents = catchAsync(async (req, res) => {
   // if(user.role === 'superAdmin')  delete criteria.companies;
   const totalSubEvents = await SubEventModel.find().countDocuments();
   const subEvents = await SubEventModel.find(criteria).skip(skip).limit(limit).populate(
-    "parentEvent venues.venueId state ticketTypes"
+    [
+      {
+        path:'parentEvent',
+        populate:{
+          path:'artists',
+          select:{artistName:1}
+        }
+      },
+      {
+        path:'venues.venueId',
+      },
+      {
+        path:"state"
+      },
+      {
+        path:"ticketTypes"
+      }
+    ]
   );
   res.status(httpStatus.CREATED).send({ total: totalSubEvents, subEvents });
 });
