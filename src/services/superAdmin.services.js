@@ -84,7 +84,7 @@ const addTicketService = async (user, payload) => {
   if (user?.role === "companyAdmin" && user?.isApproved === false)
     throw new Error("Company must be registered");
 
-  const eventOwners = payload?.eventOwners || req?.user?._id;
+  const eventOwners = payload?.eventOwners || user?._id;
 
   const assignedEvent = await SubEventModel.findById(payload?.eventId);
 
@@ -126,15 +126,15 @@ const updateTicketService = async (user, payload) => {
   if (!payload?.ticketConfigId)
     throw new Error("Please provide TicketConfigId !");
 
-  const currentTicket = TicketConfigModel.findById(
+  const currentTicket = await TicketConfigModel.findById(
     payload?.ticketConfigId
   ).populate("eventOwners venueId eventId");
 
-  if (
-    user?.role === "companyAdmin" &&
-    !currentTicket?.eventOwners?.includes(user?._id)
-  )
-    throw new Error("Update Your Ticket !");
+  // if (
+  //   user?.role === "companyAdmin" &&
+  //   !currentTicket?.eventOwners?.includes(user?._id)
+  // )
+  //   throw new Error("Update Your Ticket !");
 
   if (payload?.type) updateObject.type = payload.type;
 
